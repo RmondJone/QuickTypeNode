@@ -11,8 +11,7 @@ WORKDIR /usr/src/app/
 #开始执行命令
 COPY package.json ./
 #Docker镜像环境执行npm
-RUN npm install -g cnpm
-RUN cnpm install
+RUN npm install
 #拷贝代码到Docker镜像工作目录
 COPY . .
 #服务透出端口
