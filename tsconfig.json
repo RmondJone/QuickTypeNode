@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "jsx": "preserve",
+    "strict": false,
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": false,
+    "removeComments": false,
+    "allowJs": true,
+    "checkJs": false
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
