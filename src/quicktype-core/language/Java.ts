@@ -598,6 +598,7 @@ export class JavaRenderer extends ConvenienceRenderer {
     }
 
     protected emitFileHeader(fileName: Sourcelike, imports: string[]): void {
+        this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
         this.startFile(fileName);
         this.emitPackageAndImports(imports);
         this.ensureBlankLine();

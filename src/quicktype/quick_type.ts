@@ -1,12 +1,16 @@
 import {
+    CPlusPlusTargetLanguage,
     DartTargetLanguage,
     FetchingJSONSchemaStore,
+    GoTargetLanguage,
     InputData,
     JavaTargetLanguage,
     jsonInputForTargetLanguage,
     JSONSchemaInput,
     KotlinTargetLanguage,
+    ObjectiveCTargetLanguage,
     quicktype,
+    SwiftTargetLanguage,
     TypeScriptTargetLanguage
 } from "../quicktype-core";
 import {AcronymStyleOptions} from "../quicktype-core/support/Acronyms";
@@ -91,7 +95,7 @@ function getTargetLanguageOptions(inputData, targetLanguage) {
                 inputData: inputData,
                 lang: retTargetLanguage,
                 rendererOptions: {
-                    framework: 'kotlinx',
+                    framework: 'just-types',
                 }
             }
             break
@@ -128,11 +132,54 @@ function getTargetLanguageOptions(inputData, targetLanguage) {
                 }
             }
             break
-        default:
-            retTargetLanguage = targetLanguage
+        case 'C++':
+            retTargetLanguage = new CPlusPlusTargetLanguage()
             retOptions = {
                 inputData: inputData,
-                lang: retTargetLanguage
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true
+                }
+            }
+            break
+        case 'Swift':
+            retTargetLanguage = new SwiftTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true
+                }
+            }
+            break
+        case 'Objective-C':
+            retTargetLanguage = new ObjectiveCTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true
+                }
+            }
+            break
+        case 'Go':
+            retTargetLanguage = new GoTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true
+                }
+            }
+            break
+        default:
+            retTargetLanguage = new KotlinTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    framework: 'just-types',
+                }
             }
             break
     }
