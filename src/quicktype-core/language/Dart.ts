@@ -38,6 +38,7 @@ import {RenderContext} from "../Renderer";
 import {arrayIntercalate} from "collection-utils";
 
 export const dartOptions = {
+    nullSafety: new BooleanOption("null-safety", "Null Safety", true),
     justTypes: new BooleanOption("just-types", "Types only", false),
     codersInClass: new BooleanOption("coders-in-class", "Put encoder & decoder in Class", false),
     methodNamesWithMap: new BooleanOption("from-map", "Use method names fromMap() & toMap()", false),
@@ -312,53 +313,16 @@ export class DartRenderer extends ConvenienceRenderer {
         return [enumValue];
     }
 
-
-    /**
-     * 注释: 生成实体互转代码
-     * 时间: 2022/3/3 17:15
-     * @author 郭翰林
-     */
-    protected emitConvertMethod(): void {
-        if (!this._options.justTypes && !this._options.codersInClass) {
-            this.emitLine("import 'dart:convert';");
-            this.ensureBlankLine();
-            this.forEachTopLevel("leading-and-interposing", (t, name) => {
-                const {encoder, decoder} = defined(this._topLevelDependents.get(name));
-
-                this.emitLine(
-                    this.dartType(t),
-                    " ",
-                    decoder,
-                    "(String str) => ",
-                    this.fromDynamicExpression(t, "json.decode(str)"),
-                    ";"
-                );
-
-                this.ensureBlankLine();
-
-                this.emitLine(
-                    "String ",
-                    encoder,
-                    "(",
-                    this.dartType(t),
-                    " data) => json.encode(",
-                    this.toDynamicExpression(t, "data"),
-                    ");"
-                );
-
-                // this.emitBlock(["String ", encoder, "(", this.dartType(t), " data)"], () => {
-                //     this.emitJsonEncoderBlock(t);
-                // });
-            });
-        }
-    }
-
     protected emitFileHeader(): void {
+
         this.emitLine("///YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
+
         if (this.leadingComments !== undefined) {
             this.emitCommentLines(this.leadingComments);
         }
+
         if (this._options.justTypes) return;
+
         this.ensureBlankLine();
         if (this._options.requiredProperties) {
             this.emitLine("import 'package:meta/meta.dart';");
@@ -369,6 +333,8 @@ export class DartRenderer extends ConvenienceRenderer {
         if (this._options.useHive) {
             this.emitLine("import 'package:hive/hive.dart';");
         }
+
+        this.emitLine("import 'dart:convert';");
         if (this._options.useFreezed || this._options.useHive) {
             this.ensureBlankLine();
             const optionNameIsEmpty = this._options.partName.length === 0;
@@ -401,14 +367,54 @@ export class DartRenderer extends ConvenienceRenderer {
             t,
             _anyType => maybeAnnotated(withIssues, anyTypeIssueAnnotation, "dynamic"),
             _nullType => maybeAnnotated(withIssues, nullTypeIssueAnnotation, "dynamic"),
-            _boolType => ["bool", "?"],
-            _integerType => ["int", "?"],
-            _doubleType => ["double", "?"],
-            _stringType => ["String", "?"],
-            arrayType => ["List<", this.dartType(arrayType.items, withIssues), ">", "?"],
-            classType => [this.nameForNamedType(classType), "?"],
-            mapType => ["Map<String, ", this.dartType(mapType.values, withIssues), ">", "?"],
-            enumType => [this.nameForNamedType(enumType), "?"],
+            _boolType => {
+                if (this._options.nullSafety) {
+                    return ["bool", "?"];
+                }
+                return "bool";
+            },
+            _integerType => {
+                if (this._options.nullSafety) {
+                    return ["int", "?"];
+                }
+                return "int";
+            },
+            _doubleType => {
+                if (this._options.nullSafety) {
+                    return ["double", "?"];
+                }
+                return "double";
+            },
+            _stringType => {
+                if (this._options.nullSafety) {
+                    return ["String", "?"];
+                }
+                return "String";
+            },
+            arrayType => {
+                if (this._options.nullSafety) {
+                    return ["List<", this.dartType(arrayType.items, withIssues), ">", "?"];
+                }
+                return ["List<", this.dartType(arrayType.items, withIssues), ">"];
+            },
+            classType => {
+                if (this._options.nullSafety) {
+                    return [this.nameForNamedType(classType), "?"];
+                }
+                return this.nameForNamedType(classType);
+            },
+            mapType => {
+                if (this._options.nullSafety) {
+                    return [["Map<String, ", this.dartType(mapType.values, withIssues), ">"], "?"];
+                }
+                return ["Map<String, ", this.dartType(mapType.values, withIssues), ">"];
+            },
+            enumType => {
+                if (this._options.nullSafety) {
+                    return [this.nameForNamedType(enumType), "?"];
+                }
+                return this.nameForNamedType(enumType);
+            },
             unionType => {
                 const maybeNullable = nullableFromUnion(unionType);
                 if (maybeNullable === null) {
@@ -420,16 +426,19 @@ export class DartRenderer extends ConvenienceRenderer {
                 switch (transformedStringType.kind) {
                     case "date-time":
                     case "date":
-                        return ["DateTime", "?"];
+                        return this._options.nullSafety ? ["DateTime", "?"] : "DateTime";
                     default:
-                        return ["String", "?"];
+                        return this._options.nullSafety ? ["String", "?"] : "String";
                 }
             }
         );
     }
 
     protected mapList(itemType: Sourcelike, list: Sourcelike, mapper: Sourcelike): Sourcelike {
-        return ["List<", itemType, ">.from(", list, "!.map((x) => ", mapper, "))"];
+        if (this._options.nullSafety) {
+            return ["List<", itemType, ">.from(", list, "!.map((x) => ", mapper, "))"];
+        }
+        return ["List<", itemType, ">.from(", list, ".map((x) => ", mapper, "))"];
     }
 
     protected mapMap(valueType: Sourcelike, map: Sourcelike, valueMapper: Sourcelike): Sourcelike {
@@ -450,13 +459,18 @@ export class DartRenderer extends ConvenienceRenderer {
             classType => [this.nameForNamedType(classType), ".", this.fromJson, "(", dynamic, ")"],
             mapType =>
                 this.mapMap(this.dartType(mapType.values), dynamic, this.fromDynamicExpression(mapType.values, "v")),
-            enumType => [defined(this._enumValues.get(enumType)), "!.map[", dynamic, "]"],
+            enumType => {
+                if (this._options.nullSafety) {
+                    return [defined(this._enumValues.get(enumType)), "!.map[", dynamic, "]"];
+                }
+                return [defined(this._enumValues.get(enumType)), ".map[", dynamic, "]"];
+            },
             unionType => {
                 const maybeNullable = nullableFromUnion(unionType);
                 if (maybeNullable === null) {
                     return dynamic;
                 }
-                if (maybeNullable.kind === 'array') {
+                if (maybeNullable.kind === "array") {
                     return [dynamic, " == null ? [] : ", this.fromDynamicExpression(maybeNullable, dynamic)];
                 }
                 return dynamic;
@@ -483,7 +497,12 @@ export class DartRenderer extends ConvenienceRenderer {
             _doubleType => dynamic,
             _stringType => dynamic,
             arrayType => this.mapList("dynamic", dynamic, this.toDynamicExpression(arrayType.items, "x")),
-            _classType => [dynamic, "!.", this.toJson, "()"],
+            _classType => {
+                if (this._options.nullSafety) {
+                    return [dynamic, "!.", this.toJson, "()"];
+                }
+                return [dynamic, ".", this.toJson, "()"];
+            },
             mapType => this.mapMap("dynamic", dynamic, this.toDynamicExpression(mapType.values, "v")),
             enumType => [defined(this._enumValues.get(enumType)), ".reverse[", dynamic, "]"],
             unionType => {
@@ -491,7 +510,7 @@ export class DartRenderer extends ConvenienceRenderer {
                 if (maybeNullable === null) {
                     return dynamic;
                 }
-                if (maybeNullable.kind === 'array') {
+                if (maybeNullable.kind === "array") {
                     return [dynamic, " == null ? [] : ", this.toDynamicExpression(maybeNullable, dynamic)];
                 }
                 return dynamic;
@@ -529,7 +548,6 @@ export class DartRenderer extends ConvenienceRenderer {
             if (c.getProperties().size === 0) {
                 this.emitLine(className, "();");
             } else {
-                //构造函数
                 this.emitLine(className, "({");
                 this.indent(() => {
                     this.forEachClassProperty(c, "none", (name, _, _p) => {
@@ -540,7 +558,6 @@ export class DartRenderer extends ConvenienceRenderer {
                 this.ensureBlankLine();
 
                 this.forEachClassProperty(c, "none", (name, jsonName, p) => {
-                    //字段注解
                     const description = this.descriptionForClassProperty(c, jsonName);
                     if (description !== undefined) {
                         this.emitDescription(description);
@@ -550,7 +567,7 @@ export class DartRenderer extends ConvenienceRenderer {
                         this.classPropertyCounter++;
                         this.emitLine(`@HiveField(${this.classPropertyCounter})`);
                     }
-                    //字段定义
+
                     this.emitLine(
                         this._options.finalProperties ? "final " : "",
                         this.dartType(p.type, true),
@@ -715,14 +732,40 @@ export class DartRenderer extends ConvenienceRenderer {
 }`);
     }
 
-    /**
-     * 注释: 源码绘制
-     * 时间: 2022/3/3 17:13
-     * @author 郭翰林
-     */
     protected emitSourceStructure(): void {
         this.emitFileHeader();
-        this.emitConvertMethod();
+
+        if (!this._options.justTypes && !this._options.codersInClass) {
+            this.forEachTopLevel("leading-and-interposing", (t, name) => {
+                const {encoder, decoder} = defined(this._topLevelDependents.get(name));
+
+                this.emitLine(
+                    this.dartType(t),
+                    " ",
+                    decoder,
+                    "(String str) => ",
+                    this.fromDynamicExpression(t, "json.decode(str)"),
+                    ";"
+                );
+
+                this.ensureBlankLine();
+
+                this.emitLine(
+                    "String ",
+                    encoder,
+                    "(",
+                    this.dartType(t),
+                    " data) => json.encode(",
+                    this.toDynamicExpression(t, "data"),
+                    ");"
+                );
+
+                // this.emitBlock(["String ", encoder, "(", this.dartType(t), " data)"], () => {
+                //     this.emitJsonEncoderBlock(t);
+                // });
+            });
+        }
+
         this.forEachNamedType(
             "leading-and-interposing",
             (c: ClassType, n: Name) =>
