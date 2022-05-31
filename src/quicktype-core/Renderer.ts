@@ -282,6 +282,10 @@ export abstract class Renderer {
         return this.forEach(iterable, interposing ? count : 0, leading ? count : 0, emitter);
     }
 
+    /**
+     * 缩进
+     * @param fn
+     */
     indent(fn: () => void): void {
         this.changeIndent(1);
         fn();

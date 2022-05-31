@@ -73,7 +73,7 @@ export abstract class ConvenienceRenderer extends Renderer {
     private _enumCaseNamer: Namer | null;
 
     private _declarationIR: DeclarationIR | undefined;
-    private _namedTypes: ReadonlyArray<Type> | undefined;
+    protected _namedTypes: ReadonlyArray<Type> | undefined;
     private _namedObjects: Set<ObjectType> | undefined;
     private _namedEnums: Set<EnumType> | undefined;
     private _namedUnions: Set<UnionType> | undefined;

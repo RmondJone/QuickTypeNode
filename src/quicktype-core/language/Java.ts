@@ -595,6 +595,9 @@ export class JavaRenderer extends ConvenienceRenderer {
         for (const pkg of imports) {
             this.emitLine("import ", pkg, ";");
         }
+        if (imports.indexOf("java.util.List") == -1) {
+            this.emitLine("import java.util.List;")
+        }
     }
 
     protected emitFileHeader(fileName: Sourcelike, imports: string[]): void {
@@ -777,41 +780,64 @@ export class JavaRenderer extends ConvenienceRenderer {
         return [...new Set(imports)];
     }
 
+    /**
+     * 注释: 构造类定义
+     * 时间: 2022/5/31 9:07
+     * @author 郭翰林
+     * @param c
+     * @param className
+     */
     protected emitClassDefinition(c: ClassType, className: Name): void {
-        let imports = [...this.importsForType(c), ...this.importsForClass(c)];
-
-        this.emitFileHeader(className, imports);
-        this.emitDescription(this.descriptionForType(c));
-        this.emitClassAttributes(c, className);
-        this.emitBlock(["public class ", className], () => {
-            this.forEachClassProperty(c, "none", (name, jsonName, p) => {
-                if (this._options.lombok && this._options.lombokCopyAnnotations) {
-                    const getter = this.annotationsForAccessor(c, className, name, jsonName, p, false);
-                    const setter = this.annotationsForAccessor(c, className, name, jsonName, p, true);
-                    if (getter.length !== 0) {
-                        this.emitLine("@lombok.Getter(onMethod_ = {" + getter.join(", ") + "})");
-                    }
-                    if (setter.length !== 0) {
-                        this.emitLine("@lombok.Setter(onMethod_ = {" + setter.join(", ") + "})");
-                    }
-                }
-                this.emitLine("private ", this.javaType(false, p.type, true), " ", name, ";");
+        let lastClassType = defined(this._namedTypes)[defined(this._namedTypes).length - 1]
+        if (c.getParentTypes().size == 0) {
+            let imports = [...this.importsForType(c), ...this.importsForClass(c)];
+            this.emitFileHeader(className, imports);
+            this.emitDescription(this.descriptionForType(c));
+            this.emitClassAttributes(c, className);
+            this.emitLine(["public class ", className], " {");
+            this.indent(() => this.emitClassProperty(c, className));
+        } else {
+            this.indent(() => {
+                this.emitBlock(["public static class ", className], () => this.emitClassProperty(c, className));
             });
-            if (!this._options.lombok) {
-                this.forEachClassProperty(c, "leading-and-interposing", (name, jsonName, p) => {
-                    this.emitDescription(this.descriptionForClassProperty(c, jsonName));
-                    const [getterName, setterName] = defined(this._gettersAndSettersForPropertyName.get(name));
-                    const rendered = this.javaType(false, p.type);
-                    this.annotationsForAccessor(c, className, name, jsonName, p, false)
-                        .forEach(annotation => this.emitLine(annotation));
-                    this.emitLine("public ", rendered, " ", getterName, "() { return ", name, "; }");
-                    this.annotationsForAccessor(c, className, name, jsonName, p, true)
-                        .forEach(annotation => this.emitLine(annotation));
-                    this.emitLine("public void ", setterName, "(", rendered, " value) { this.", name, " = value; }");
-                });
+        }
+        if (lastClassType == c) {
+            this.emitLine("}")
+        }
+    }
+
+    /**
+     * 构造类属性
+     * @param c
+     * @param className
+     */
+    protected emitClassProperty(c: ClassType, className: Name) {
+        this.forEachClassProperty(c, "none", (name, jsonName, p) => {
+            if (this._options.lombok && this._options.lombokCopyAnnotations) {
+                const getter = this.annotationsForAccessor(c, className, name, jsonName, p, false);
+                const setter = this.annotationsForAccessor(c, className, name, jsonName, p, true);
+                if (getter.length !== 0) {
+                    this.emitLine("@lombok.Getter(onMethod_ = {" + getter.join(", ") + "})");
+                }
+                if (setter.length !== 0) {
+                    this.emitLine("@lombok.Setter(onMethod_ = {" + setter.join(", ") + "})");
+                }
             }
+            this.emitLine("private ", this.javaType(false, p.type, true), " ", name, ";");
         });
-        this.finishFile();
+        if (!this._options.lombok) {
+            this.forEachClassProperty(c, "leading-and-interposing", (name, jsonName, p) => {
+                this.emitDescription(this.descriptionForClassProperty(c, jsonName));
+                const [getterName, setterName] = defined(this._gettersAndSettersForPropertyName.get(name));
+                const rendered = this.javaType(false, p.type);
+                this.annotationsForAccessor(c, className, name, jsonName, p, false)
+                    .forEach(annotation => this.emitLine(annotation));
+                this.emitLine("public ", rendered, " ", getterName, "() { return ", name, "; }");
+                this.annotationsForAccessor(c, className, name, jsonName, p, true)
+                    .forEach(annotation => this.emitLine(annotation));
+                this.emitLine("public void ", setterName, "(", rendered, " value) { this.", name, " = value; }");
+            });
+        }
     }
 
     protected unionField(
