@@ -19,5 +19,5 @@ npm start
 **2、Docker镜像启动**
 
 ```
-docker run -d -p 8085:8085 guohanlin/quicktype:latest
+docker run --name=quicktype -d -p 8085:8085 guohanlin/quicktype:latest
 ```
