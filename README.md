@@ -13,6 +13,7 @@ Fixed some usage scenarios of QuickType, as follows:
 You can build this Node service in the following two ways
 
 **1. Directly start the service locally**
+
 Execute the following 2 commands. After the startup is successful, the console will print the service access link
 
 ```
