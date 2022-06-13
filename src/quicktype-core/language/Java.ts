@@ -789,7 +789,8 @@ export class JavaRenderer extends ConvenienceRenderer {
      */
     protected emitClassDefinition(c: ClassType, className: Name): void {
         let lastClassType = defined(this._namedTypes)[defined(this._namedTypes).length - 1]
-        if (c.getParentTypes().size == 0) {
+        //判断是否是最外层的类
+        if (c.getParentTypes().size == 0 || defined(this._namedTypes).length == 1) {
             let imports = [...this.importsForType(c), ...this.importsForClass(c)];
             this.emitFileHeader(className, imports);
             this.emitDescription(this.descriptionForType(c));
