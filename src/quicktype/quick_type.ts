@@ -107,7 +107,7 @@ function getTargetLanguageOptions(inputData, targetLanguage) {
                 rendererOptions: {
                     'copy-with': false,
                     'required-props': false,
-                    'null-safety': true
+                    'null-safety': true,
                 }
             }
             break
