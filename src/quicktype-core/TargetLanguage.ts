@@ -1,20 +1,19 @@
-import {mapMap} from "collection-utils";
+import { mapMap } from "collection-utils";
 
-import {TypeGraph} from "./TypeGraph";
-import {RenderContext, Renderer} from "./Renderer";
-import {Option, OptionDefinition} from "./RendererOptions";
-import {SerializedRenderResult, serializeRenderResult} from "./Source";
-import {StringTypeMapping} from "./TypeBuilder";
-import {defined} from "./support/Support";
-import {ConvenienceRenderer} from "./ConvenienceRenderer";
-import {Type} from "./Type";
-import {DateTimeRecognizer, DefaultDateTimeRecognizer} from "./DateTime";
+import { TypeGraph } from "./TypeGraph";
+import { Renderer, RenderContext } from "./Renderer";
+import { OptionDefinition, Option } from "./RendererOptions";
+import { serializeRenderResult, SerializedRenderResult } from "./Source";
+import { StringTypeMapping } from "./TypeBuilder";
+import { defined } from "./support/Support";
+import { ConvenienceRenderer } from "./ConvenienceRenderer";
+import { Type } from "./Type";
+import { DateTimeRecognizer, DefaultDateTimeRecognizer } from "./DateTime";
 
 export type MultiFileRenderResult = ReadonlyMap<string, SerializedRenderResult>;
 
 export abstract class TargetLanguage {
-    constructor(readonly displayName: string, readonly names: string[], readonly extension: string) {
-    }
+    constructor(readonly displayName: string, readonly names: string[], readonly extension: string) {}
 
     protected abstract getOptions(): Option<any>[];
 
@@ -25,11 +24,11 @@ export abstract class TargetLanguage {
     get cliOptionDefinitions(): { display: OptionDefinition[]; actual: OptionDefinition[] } {
         let actual: OptionDefinition[] = [];
         let display: OptionDefinition[] = [];
-        for (const {cliDefinitions} of this.getOptions()) {
+        for (const { cliDefinitions } of this.getOptions()) {
             actual = actual.concat(cliDefinitions.actual);
             display = display.concat(cliDefinitions.display);
         }
-        return {actual, display};
+        return { actual, display };
     }
 
     get name(): string {
@@ -49,7 +48,7 @@ export abstract class TargetLanguage {
         if (indentation === undefined) {
             indentation = this.defaultIndentation;
         }
-        const renderContext = {typeGraph, leadingComments};
+        const renderContext = { typeGraph, leadingComments };
         const renderer = this.makeRenderer(renderContext, rendererOptions);
         if ((renderer as any).setAlphabetizeProperties !== undefined) {
             (renderer as ConvenienceRenderer).setAlphabetizeProperties(alphabetizeProperties);

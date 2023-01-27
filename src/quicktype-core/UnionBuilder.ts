@@ -1,18 +1,18 @@
-import {mapMap, mapMerge, mapUpdateInto, setUnionInto} from "collection-utils";
+import { mapMerge, mapUpdateInto, mapMap, setUnionInto } from "collection-utils";
 
-import {isPrimitiveTypeKind, PrimitiveStringTypeKind, PrimitiveTypeKind, Type, TypeKind, UnionType} from "./Type";
-import {matchTypeExhaustive} from "./TypeUtils";
+import { TypeKind, PrimitiveStringTypeKind, Type, UnionType, PrimitiveTypeKind, isPrimitiveTypeKind } from "./Type";
+import { matchTypeExhaustive } from "./TypeUtils";
 import {
+    TypeAttributes,
     combineTypeAttributes,
     emptyTypeAttributes,
-    increaseTypeAttributesDistance,
     makeTypeAttributesInferred,
-    TypeAttributes
+    increaseTypeAttributesDistance
 } from "./attributes/TypeAttributes";
-import {assert, assertNever, defined, panic} from "./support/Support";
-import {TypeBuilder} from "./TypeBuilder";
-import {StringTypes, stringTypesTypeAttributeKind} from "./attributes/StringTypes";
-import {TypeRef} from "./TypeGraph";
+import { defined, assert, panic, assertNever } from "./support/Support";
+import { TypeBuilder } from "./TypeBuilder";
+import { StringTypes, stringTypesTypeAttributeKind } from "./attributes/StringTypes";
+import { TypeRef } from "./TypeGraph";
 
 // FIXME: This interface is badly designed.  All the properties
 // should use immutable types, and getMemberKinds should be
@@ -83,10 +83,9 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
 
     private readonly _enumCases: Set<string> = new Set();
 
-    private _lostTypeAttributes: boolean = false;
+    private _lostTypeAttributes = false;
 
-    constructor(private readonly _conflateNumbers: boolean) {
-    }
+    constructor(private readonly _conflateNumbers: boolean) {}
 
     private have(kind: TypeKind): boolean {
         return (
@@ -100,12 +99,10 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
         // or add a new method that does that.
         this._lostTypeAttributes = true;
     }
-
     addAny(attributes: TypeAttributes): void {
         addAttributesToBuilder(this._nonStringTypeAttributes, "any", attributes);
         this._lostTypeAttributes = true;
     }
-
     addPrimitive(kind: PrimitiveTypeKind, attributes: TypeAttributes): void {
         assert(kind !== "any", "any must be added with addAny");
         addAttributesToBuilder(this._nonStringTypeAttributes, kind, attributes);
@@ -156,7 +153,6 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
         this.arrayData.push(t);
         addAttributesToBuilder(this._nonStringTypeAttributes, "array", attributes);
     }
-
     addObject(t: TObject, attributes: TypeAttributes): void {
         this.objectData.push(t);
         addAttributesToBuilder(this._nonStringTypeAttributes, "object", attributes);
@@ -175,7 +171,6 @@ export class UnionAccumulator<TArray, TObject> implements UnionTypeProvider<TArr
     addStringCases(cases: string[], attributes: TypeAttributes): void {
         this.addFullStringType(attributes, StringTypes.fromCases(cases));
     }
-
     addStringCase(s: string, count: number, attributes: TypeAttributes): void {
         this.addFullStringType(attributes, StringTypes.fromCase(s, count));
     }
@@ -237,7 +232,6 @@ function attributesForTypes(types: Iterable<Type>): [ReadonlyMap<Type, TypeAttri
     // All the unions that are equivalent to the single root type.  If more than one type
     // is given, this will be empty.
     let unionsEquivalentToRoot: Set<UnionType> = new Set();
-
     function traverse(t: Type, path: UnionOrFaux[], isEquivalentToRoot: boolean): void {
         if (t instanceof UnionType) {
             unions.add(t);
@@ -267,7 +261,10 @@ function attributesForTypes(types: Iterable<Type>): [ReadonlyMap<Type, TypeAttri
 
     const resultAttributes = mapMap(unionsForType, (unionForType, t) => {
         const singleAncestors = Array.from(unionForType).filter(u => defined(typesForUnion.get(u)).size === 1);
-        assert(singleAncestors.every(u => defined(typesForUnion.get(u)).has(t)), "We messed up bookkeeping");
+        assert(
+            singleAncestors.every(u => defined(typesForUnion.get(u)).has(t)),
+            "We messed up bookkeeping"
+        );
         const inheritedAttributes = singleAncestors.map(u => u.getAttributes());
         return combineTypeAttributes("union", [t.getAttributes()].concat(inheritedAttributes));
     });
@@ -325,15 +322,13 @@ export class TypeRefUnionAccumulator extends UnionAccumulator<TypeRef, TypeRef> 
 }
 
 export abstract class UnionBuilder<TBuilder extends TypeBuilder, TArrayData, TObjectData> {
-    constructor(protected readonly typeBuilder: TBuilder) {
-    }
+    constructor(protected readonly typeBuilder: TBuilder) {}
 
     protected abstract makeObject(
         objects: TObjectData,
         typeAttributes: TypeAttributes,
         forwardingRef: TypeRef | undefined
     ): TypeRef;
-
     protected abstract makeArray(
         arrays: TArrayData,
         typeAttributes: TypeAttributes,

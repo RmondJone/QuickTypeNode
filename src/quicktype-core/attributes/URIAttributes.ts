@@ -1,11 +1,11 @@
 import URI from "urijs";
 
-import {emptyTypeAttributes, TypeAttributeKind, TypeAttributes} from "./TypeAttributes";
-import {setUnionManyInto} from "collection-utils";
-import {JSONSchemaAttributes, JSONSchemaType, Ref} from "../input/JSONSchemaInput";
-import {JSONSchema} from "../input/JSONSchemaStore";
-import {checkArray, checkString} from "../support/Support";
-import {Type} from "../Type";
+import { TypeAttributeKind, TypeAttributes, emptyTypeAttributes } from "./TypeAttributes";
+import { setUnionManyInto } from "collection-utils";
+import { JSONSchemaType, JSONSchemaAttributes, Ref } from "../input/JSONSchemaInput";
+import { JSONSchema } from "../input/JSONSchemaStore";
+import { checkArray, checkString } from "../support/Support";
+import { Type } from "../Type";
 
 const protocolsSchemaProperty = "qt-uri-protocols";
 const extensionsSchemaProperty = "qt-uri-extensions";
@@ -92,5 +92,5 @@ export function uriSchemaAttributesProducer(
 
     if (protocols.size === 0 && extensions.size === 0) return undefined;
 
-    return {forString: uriTypeAttributeKind.makeAttributes([protocols, extensions])};
+    return { forString: uriTypeAttributeKind.makeAttributes([protocols, extensions]) };
 }

@@ -1,9 +1,9 @@
-import {Type, TypeKind} from "../Type";
-import {TypeAttributeKind} from "./TypeAttributes";
-import {assert} from "../support/Support";
-import {messageError} from "../Messages";
-import {JSONSchemaAttributes, JSONSchemaType, Ref} from "../input/JSONSchemaInput";
-import {JSONSchema} from "../input/JSONSchemaStore";
+import { Type, TypeKind } from "../Type";
+import { TypeAttributeKind } from "./TypeAttributes";
+import { assert } from "../support/Support";
+import { messageError } from "../Messages";
+import { JSONSchemaType, JSONSchemaAttributes, Ref } from "../input/JSONSchemaInput";
+import { JSONSchema } from "../input/JSONSchemaStore";
 
 // This can't be an object type, unfortunately, because it's in the
 // type's identity and as such must be comparable and hashable with
@@ -13,7 +13,7 @@ export type MinMaxConstraint = [number | undefined, number | undefined];
 function checkMinMaxConstraint(minmax: MinMaxConstraint): MinMaxConstraint | undefined {
     const [min, max] = minmax;
     if (typeof min === "number" && typeof max === "number" && min > max) {
-        return messageError("MiscInvalidMinMaxConstraint", {min, max});
+        return messageError("MiscInvalidMinMaxConstraint", { min, max });
     }
     if (min === undefined && max === undefined) {
         return undefined;
@@ -136,7 +136,7 @@ export function minMaxAttributeProducer(
 
     const maybeMinMax = producer(schema, "minimum", "maximum");
     if (maybeMinMax === undefined) return undefined;
-    return {forNumber: minMaxTypeAttributeKind.makeAttributes(maybeMinMax)};
+    return { forNumber: minMaxTypeAttributeKind.makeAttributes(maybeMinMax) };
 }
 
 export function minMaxLengthAttributeProducer(
@@ -148,7 +148,7 @@ export function minMaxLengthAttributeProducer(
 
     const maybeMinMaxLength = producer(schema, "minLength", "maxLength");
     if (maybeMinMaxLength === undefined) return undefined;
-    return {forString: minMaxLengthTypeAttributeKind.makeAttributes(maybeMinMaxLength)};
+    return { forString: minMaxLengthTypeAttributeKind.makeAttributes(maybeMinMaxLength) };
 }
 
 export function minMaxValueForType(t: Type): MinMaxConstraint | undefined {
@@ -200,7 +200,7 @@ export function patternAttributeProducer(
 
     const patt = schema.pattern;
     if (typeof patt !== "string") return undefined;
-    return {forString: patternTypeAttributeKind.makeAttributes(patt)};
+    return { forString: patternTypeAttributeKind.makeAttributes(patt) };
 }
 
 export function patternForType(t: Type): string | undefined {

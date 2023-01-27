@@ -1,4 +1,4 @@
-import {EnumOption} from "../RendererOptions";
+import { EnumOption } from "../RendererOptions";
 
 export enum ConvertersOptions {
     TopLevel = "top-level",

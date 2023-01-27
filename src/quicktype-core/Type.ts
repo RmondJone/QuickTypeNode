@@ -1,33 +1,33 @@
 import {
-    addHashCode,
-    areEqual,
-    definedMap,
-    hashCodeInit,
-    hashCodeOf,
-    hasOwnProperty,
     iterableEvery,
     iterableFind,
     iterableSome,
-    mapFilter,
-    mapFromObject,
+    toReadonlySet,
+    hashCodeOf,
+    areEqual,
     mapMap,
-    mapSome,
-    mapSortByKey,
-    mapSortToArray,
-    setFilter,
     setMap,
+    mapSortByKey,
+    mapSome,
+    mapFilter,
     setSortBy,
+    setFilter,
     setUnionInto,
-    toReadonlySet
+    mapSortToArray,
+    definedMap,
+    hashCodeInit,
+    addHashCode,
+    hasOwnProperty,
+    mapFromObject
 } from "collection-utils";
 
-import {assert, defined, panic} from "./support/Support";
-import {BaseGraphRewriteBuilder, TypeReconstituter} from "./GraphRewriting";
-import {namesTypeAttributeKind, TypeNames} from "./attributes/TypeNames";
-import {TypeAttributes} from "./attributes/TypeAttributes";
-import {messageAssert} from "./Messages";
-import {attributesForTypeRef, derefTypeRef, TypeGraph, TypeRef, typeRefIndex} from "./TypeGraph";
-import {uriInferenceAttributesProducer} from "./attributes/URIAttributes";
+import { defined, panic, assert } from "./support/Support";
+import { TypeReconstituter, BaseGraphRewriteBuilder } from "./GraphRewriting";
+import { TypeNames, namesTypeAttributeKind } from "./attributes/TypeNames";
+import { TypeAttributes } from "./attributes/TypeAttributes";
+import { messageAssert } from "./Messages";
+import { TypeRef, attributesForTypeRef, derefTypeRef, TypeGraph, typeRefIndex } from "./TypeGraph";
+import { uriInferenceAttributesProducer } from "./attributes/URIAttributes";
 
 /**
  * `jsonSchema` is the `format` to be used to represent this string type in
@@ -50,18 +50,20 @@ export type TransformedStringTypeTargets = {
  * stringified integers map to integers.
  */
 const transformedStringTypeTargetTypeKinds = {
-    date: {jsonSchema: "date", primitive: undefined},
-    time: {jsonSchema: "time", primitive: undefined},
-    "date-time": {jsonSchema: "date-time", primitive: undefined},
-    uuid: {jsonSchema: "uuid", primitive: undefined},
-    uri: {jsonSchema: "uri", primitive: undefined, attributesProducer: uriInferenceAttributesProducer},
-    "integer-string": {jsonSchema: "integer", primitive: "integer"} as TransformedStringTypeTargets,
-    "bool-string": {jsonSchema: "boolean", primitive: "bool"} as TransformedStringTypeTargets
+    date: { jsonSchema: "date", primitive: undefined },
+    time: { jsonSchema: "time", primitive: undefined },
+    "date-time": { jsonSchema: "date-time", primitive: undefined },
+    uuid: { jsonSchema: "uuid", primitive: undefined },
+    uri: { jsonSchema: "uri", primitive: undefined, attributesProducer: uriInferenceAttributesProducer },
+    "integer-string": { jsonSchema: "integer", primitive: "integer" } as TransformedStringTypeTargets,
+    "bool-string": { jsonSchema: "boolean", primitive: "bool" } as TransformedStringTypeTargets
 };
 
-export const transformedStringTypeTargetTypeKindsMap = mapFromObject(transformedStringTypeTargetTypeKinds as {
-    [kind: string]: TransformedStringTypeTargets;
-});
+export const transformedStringTypeTargetTypeKindsMap = mapFromObject(
+    transformedStringTypeTargetTypeKinds as {
+        [kind: string]: TransformedStringTypeTargets;
+    }
+);
 
 export type TransformedStringTypeKind = keyof typeof transformedStringTypeTargetTypeKinds;
 export type PrimitiveStringTypeKind = "string" | TransformedStringTypeKind;
@@ -135,8 +137,9 @@ export class TypeIdentity {
 export type MaybeTypeIdentity = TypeIdentity | undefined;
 
 export abstract class Type {
-    constructor(readonly typeRef: TypeRef, protected readonly graph: TypeGraph, readonly kind: TypeKind) {
-    }
+    abstract readonly kind: TypeKind;
+
+    constructor(readonly typeRef: TypeRef, protected readonly graph: TypeGraph) {}
 
     get index(): number {
         return typeRefIndex(this.typeRef);
@@ -171,12 +174,9 @@ export abstract class Type {
     }
 
     abstract get isNullable(): boolean;
-
     // FIXME: Remove `isPrimitive`
     abstract isPrimitive(): this is PrimitiveType;
-
     abstract get identity(): MaybeTypeIdentity;
-
     abstract reconstitute<T extends BaseGraphRewriteBuilder>(
         builder: TypeReconstituter<T>,
         canonicalOrder: boolean
@@ -203,7 +203,7 @@ export abstract class Type {
         queue: (a: Type, b: Type) => boolean
     ): boolean;
 
-    structurallyCompatible(other: Type, conflateNumbers: boolean = false): boolean {
+    structurallyCompatible(other: Type, conflateNumbers = false): boolean {
         function kindsCompatible(kind1: TypeKind, kind2: TypeKind): boolean {
             if (kind1 === kind2) return true;
             if (!conflateNumbers) return false;
@@ -269,7 +269,7 @@ export abstract class Type {
         const workList: Type[] = [this];
         const processed = new Set<Type>();
         const ancestors = new Set<Type>();
-        for (; ;) {
+        for (;;) {
             const t = workList.pop();
             if (t === undefined) break;
 
@@ -305,8 +305,9 @@ export function primitiveTypeIdentity(kind: PrimitiveTypeKind, attributes: TypeA
 }
 
 export class PrimitiveType extends Type {
-    // @ts-ignore: This is initialized in the Type constructor
-    readonly kind: PrimitiveTypeKind;
+    constructor(typeRef: TypeRef, graph: TypeGraph, public readonly kind: PrimitiveTypeKind) {
+        super(typeRef, graph);
+    }
 
     get isNullable(): boolean {
         return this.kind === "null" || this.kind === "any" || this.kind === "none";
@@ -343,11 +344,10 @@ export function arrayTypeIdentity(attributes: TypeAttributes, itemsRef: TypeRef)
 }
 
 export class ArrayType extends Type {
-    // @ts-ignore: This is initialized in the Type constructor
-    readonly kind: "array";
+    public readonly kind = "array";
 
     constructor(typeRef: TypeRef, graph: TypeGraph, private _itemsRef?: TypeRef) {
-        super(typeRef, graph, "array");
+        super(typeRef, graph);
     }
 
     setItems(itemsRef: TypeRef) {
@@ -405,8 +405,7 @@ export class ArrayType extends Type {
 }
 
 export class GenericClassProperty<T> {
-    constructor(readonly typeData: T, readonly isOptional: boolean) {
-    }
+    constructor(readonly typeData: T, readonly isOptional: boolean) {}
 
     equals(other: any): boolean {
         if (!(other instanceof GenericClassProperty)) {
@@ -459,18 +458,15 @@ export function mapTypeIdentify(
 }
 
 export class ObjectType extends Type {
-    // @ts-ignore: This is initialized in the Type constructor
-    readonly kind: ObjectTypeKind;
-
     constructor(
         typeRef: TypeRef,
         graph: TypeGraph,
-        kind: ObjectTypeKind,
+        public readonly kind: ObjectTypeKind,
         readonly isFixed: boolean,
         private _properties: ReadonlyMap<string, ClassProperty> | undefined,
         private _additionalPropertiesRef: TypeRef | undefined
     ) {
-        super(typeRef, graph, kind);
+        super(typeRef, graph);
 
         if (kind === "map") {
             if (_properties !== undefined) {
@@ -629,9 +625,6 @@ export class ObjectType extends Type {
 }
 
 export class ClassType extends ObjectType {
-    // @ts-ignore: This is initialized in the Type constructor
-    kind: "class";
-
     constructor(
         typeRef: TypeRef,
         graph: TypeGraph,
@@ -643,11 +636,15 @@ export class ClassType extends ObjectType {
 }
 
 export class MapType extends ObjectType {
-    // @ts-ignore: This is initialized in the Type constructor
-    readonly kind: "map";
-
     constructor(typeRef: TypeRef, graph: TypeGraph, valuesRef: TypeRef | undefined) {
-        super(typeRef, graph, "map", false, definedMap(valuesRef, () => new Map()), valuesRef);
+        super(
+            typeRef,
+            graph,
+            "map",
+            false,
+            definedMap(valuesRef, () => new Map()),
+            valuesRef
+        );
     }
 
     // FIXME: Remove and use `getAdditionalProperties()` instead.
@@ -662,11 +659,10 @@ export function enumTypeIdentity(attributes: TypeAttributes, cases: ReadonlySet<
 }
 
 export class EnumType extends Type {
-    // @ts-ignore: This is initialized in the Type constructor
-    kind: "enum";
+    public readonly kind = "enum";
 
     constructor(typeRef: TypeRef, graph: TypeGraph, readonly cases: ReadonlySet<string>) {
-        super(typeRef, graph, "enum");
+        super(typeRef, graph);
     }
 
     get isNullable(): boolean {
@@ -741,8 +737,13 @@ export function intersectionTypeIdentity(
 }
 
 export abstract class SetOperationType extends Type {
-    constructor(typeRef: TypeRef, graph: TypeGraph, kind: TypeKind, private _memberRefs?: ReadonlySet<TypeRef>) {
-        super(typeRef, graph, kind);
+    constructor(
+        typeRef: TypeRef,
+        graph: TypeGraph,
+        public readonly kind: TypeKind,
+        private _memberRefs?: ReadonlySet<TypeRef>
+    ) {
+        super(typeRef, graph);
     }
 
     setMembers(memberRefs: ReadonlySet<TypeRef>): void {
@@ -807,9 +808,6 @@ export abstract class SetOperationType extends Type {
 }
 
 export class IntersectionType extends SetOperationType {
-    // @ts-ignore: This is initialized in the Type constructor
-    kind: "intersection";
-
     constructor(typeRef: TypeRef, graph: TypeGraph, memberRefs?: ReadonlySet<TypeRef>) {
         super(typeRef, graph, "intersection", memberRefs);
     }
@@ -830,9 +828,6 @@ export class IntersectionType extends SetOperationType {
 }
 
 export class UnionType extends SetOperationType {
-    // @ts-ignore: This is initialized in the Type constructor
-    kind: "union";
-
     constructor(typeRef: TypeRef, graph: TypeGraph, memberRefs?: ReadonlySet<TypeRef>) {
         super(typeRef, graph, "union", memberRefs);
         if (memberRefs !== undefined) {

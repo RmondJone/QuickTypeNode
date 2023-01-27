@@ -1,29 +1,29 @@
-import {mapFirst} from "collection-utils";
+import { mapFirst } from "collection-utils";
 
-import {TargetLanguage} from "../TargetLanguage";
-import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
+import { TargetLanguage } from "../TargetLanguage";
+import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
 import {
-    allLowerWordStyle,
-    combineWords,
-    escapeNonPrintableMapper,
-    firstUpperWordStyle,
-    intToHex,
-    isAscii,
-    isLetterOrUnderscore,
-    isLetterOrUnderscoreOrDigit,
-    isPrintable,
     legalizeCharacters,
     splitIntoWords,
-    utf32ConcatMap
+    isLetterOrUnderscoreOrDigit,
+    combineWords,
+    allLowerWordStyle,
+    firstUpperWordStyle,
+    intToHex,
+    utf32ConcatMap,
+    escapeNonPrintableMapper,
+    isPrintable,
+    isAscii,
+    isLetterOrUnderscore
 } from "../support/Strings";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {ClassType, EnumType, Type, UnionType} from "../Type";
-import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
-import {maybeAnnotated, Sourcelike} from "../Source";
-import {anyTypeIssueAnnotation, nullTypeIssueAnnotation} from "../Annotation";
-import {BooleanOption, EnumOption, getOptionValues, Option, OptionValues} from "../RendererOptions";
-import {defined} from "../support/Support";
-import {RenderContext} from "../Renderer";
+import { Name, Namer, funPrefixNamer } from "../Naming";
+import { UnionType, Type, ClassType, EnumType } from "../Type";
+import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
+import { Sourcelike, maybeAnnotated } from "../Source";
+import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
+import { BooleanOption, EnumOption, Option, getOptionValues, OptionValues } from "../RendererOptions";
+import { defined } from "../support/Support";
+import { RenderContext } from "../Renderer";
 
 export enum Density {
     Normal,
@@ -47,7 +47,7 @@ export const rustOptions = {
         ["public", Visibility.Public]
     ]),
     deriveDebug: new BooleanOption("derive-debug", "Derive Debug impl", false),
-    edition2018: new BooleanOption("edition-2018", "Edition 2018", false),
+    edition2018: new BooleanOption("edition-2018", "Edition 2018", true),
     leadingComments: new BooleanOption("leading-comments", "Leading Comments", true)
 };
 
@@ -61,11 +61,20 @@ export class RustTargetLanguage extends TargetLanguage {
     }
 
     protected getOptions(): Option<any>[] {
-        return [rustOptions.density, rustOptions.visibility, rustOptions.deriveDebug];
+        return [
+            rustOptions.density,
+            rustOptions.visibility,
+            rustOptions.deriveDebug,
+            rustOptions.edition2018,
+            rustOptions.leadingComments
+        ];
     }
 }
 
 const keywords = [
+    "Serialize",
+    "Deserialize",
+
     // Special reserved identifiers used internally for elided lifetimes,
     // unnamed method parameters, crate root module, error recovery etc.
     "{{root}}",
@@ -215,15 +224,15 @@ export class RustRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_c: ClassType, _className: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForUnionMembers(_u: UnionType, _unionName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected get commentLineStart(): string {
@@ -239,7 +248,7 @@ export class RustRenderer extends ConvenienceRenderer {
         return kind === "array" || kind === "map";
     }
 
-    private rustType(t: Type, withIssues: boolean = false): Sourcelike {
+    private rustType(t: Type, withIssues = false): Sourcelike {
         return matchType<Sourcelike>(
             t,
             _anyType => maybeAnnotated(withIssues, anyTypeIssueAnnotation, "Option<serde_json::Value>"),
@@ -360,7 +369,7 @@ export class RustRenderer extends ConvenienceRenderer {
             return;
         }
 
-        const topLevelName = defined(mapFirst(this.topLevels));
+        const topLevelName = defined(mapFirst(this.topLevels)).getCombinedName();
         this.emitMultiline(
             `// Example code that deserializes and serializes the model.
 // extern crate serde;

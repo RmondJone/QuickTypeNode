@@ -1,5 +1,5 @@
-import {EnumOption} from "../RendererOptions";
-import {allLowerWordStyle, allUpperWordStyle, firstUpperWordStyle, originalWord} from "./Strings";
+import { EnumOption } from "../RendererOptions";
+import { allUpperWordStyle, firstUpperWordStyle, originalWord, allLowerWordStyle } from "./Strings";
 
 export const acronyms: string[] = [
     "aaa",

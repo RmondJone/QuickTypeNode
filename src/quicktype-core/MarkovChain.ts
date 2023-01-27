@@ -1,5 +1,5 @@
-import {assert, inflateBase64, panic} from "./support/Support";
-import {encodedMarkovChain} from "./EncodedMarkovChain";
+import { panic, assert, inflateBase64 } from "./support/Support";
+import { encodedMarkovChain } from "./EncodedMarkovChain";
 
 // This must be null, not undefined, because we read it from JSON.
 export type SubTrie = number | null | Trie;
@@ -18,7 +18,7 @@ function makeTrie(): Trie {
     for (let i = 0; i < 128; i++) {
         arr.push(null);
     }
-    return {count: 0, arr};
+    return { count: 0, arr };
 }
 
 function lookup(t: Trie, seq: string, i: number): Trie | number | undefined {
@@ -77,11 +77,11 @@ export function train(lines: string[], depth: number): MarkovChain {
     const trie = makeTrie();
     for (const l of lines) {
         for (let i = depth; i <= l.length; i++) {
-            increment(trie, l.substr(i - depth, depth), 0);
+            increment(trie, l.slice(i - depth, i), 0);
         }
     }
 
-    return {trie, depth};
+    return { trie, depth };
 }
 
 export function load(): MarkovChain {
@@ -89,14 +89,14 @@ export function load(): MarkovChain {
 }
 
 export function evaluateFull(mc: MarkovChain, word: string): [number, number[]] {
-    const {trie, depth} = mc;
+    const { trie, depth } = mc;
     if (word.length < depth) {
         return [1, []];
     }
     let p = 1;
     const scores: number[] = [];
     for (let i = depth; i <= word.length; i++) {
-        let cp = lookup(trie, word.substr(i - depth, depth), 0);
+        let cp = lookup(trie, word.slice(i - depth, i), 0);
         if (typeof cp === "object") {
             return panic("Did we mess up the depth?");
         }

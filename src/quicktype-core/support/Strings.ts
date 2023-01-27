@@ -1,6 +1,6 @@
-import {assert, assertNever, defined, panic} from "./Support";
-import {acronyms} from "./Acronyms";
-import {messageAssert} from "../Messages";
+import { assert, defined, panic, assertNever } from "./Support";
+import { acronyms } from "./Acronyms";
+import { messageAssert } from "../Messages";
 
 export type NamingStyle =
     | "pascal"
@@ -10,11 +10,12 @@ export type NamingStyle =
     | "pascal-upper-acronyms"
     | "camel-upper-acronyms";
 
-const unicode = require("@mark.probst/unicode-properties");
+import unicode from "unicode-properties";
 
-function computeAsciiMap(
-    mapper: (codePoint: number) => string
-): { charStringMap: string[]; charNoEscapeMap: number[] } {
+function computeAsciiMap(mapper: (codePoint: number) => string): {
+    charStringMap: string[];
+    charNoEscapeMap: number[];
+} {
     const charStringMap: string[] = [];
     const charNoEscapeMap: number[] = [];
 
@@ -28,7 +29,7 @@ function computeAsciiMap(
         charNoEscapeMap.push(noEscape);
     }
 
-    return {charStringMap, charNoEscapeMap};
+    return { charStringMap, charNoEscapeMap };
 }
 
 type CodePointPredicate = (codePoint: number) => boolean;
@@ -45,7 +46,7 @@ function precomputedCodePointPredicate(p: CodePointPredicate): CodePointPredicat
 
 // FIXME: This is a copy of code in src/Data/String/Util.js
 export function utf16ConcatMap(mapper: (utf16Unit: number) => string): (s: string) => string {
-    const {charStringMap, charNoEscapeMap} = computeAsciiMap(mapper);
+    const { charStringMap, charNoEscapeMap } = computeAsciiMap(mapper);
 
     return function stringConcatMap_inner(s: string): string {
         let cs: string[] | null = null;
@@ -86,7 +87,7 @@ function isLowSurrogate(cc: number): boolean {
 }
 
 export function utf32ConcatMap(mapper: (codePoint: number) => string): (s: string) => string {
-    const {charStringMap, charNoEscapeMap} = computeAsciiMap(mapper);
+    const { charStringMap, charNoEscapeMap } = computeAsciiMap(mapper);
 
     return function stringConcatMap_inner(s: string): string {
         let cs: string[] | null = null;
@@ -191,7 +192,6 @@ export function escapeNonPrintableMapper(
                 return escaper(u);
         }
     }
-
     return mapper;
 }
 
@@ -274,7 +274,7 @@ export function trimEnd(str: string): string {
         firstWS = i;
     }
     if (firstWS === l) return str;
-    return str.substr(0, firstWS);
+    return str.slice(0, firstWS);
 }
 
 function modifyFirstChar(f: (c: string) => string, s: string): string {
@@ -302,7 +302,7 @@ export function camelCase(str: string): string {
 }
 
 export function snakeCase(str: string): string {
-    const words = splitIntoWords(str).map(({word}) => word.toLowerCase());
+    const words = splitIntoWords(str).map(({ word }) => word.toLowerCase());
     return words.join("_");
 }
 
@@ -342,7 +342,6 @@ export function splitIntoWords(s: string): WordInName[] {
     function atEnd(): boolean {
         return i >= len;
     }
-
     function currentCodePoint(): number {
         return defined(s.codePointAt(i));
     }
@@ -359,19 +358,15 @@ export function splitIntoWords(s: string): WordInName[] {
     function skipNonWord(): void {
         skipWhile(fastIsNonWordCharacter);
     }
-
     function skipLowerCase(): void {
         skipWhile(fastIsLowerCase);
     }
-
     function skipUpperCase(): void {
         skipWhile(fastIsUpperCase);
     }
-
     function skipNonLetter(): void {
         skipWhile(fastNonLetter);
     }
-
     function skipDigits(): void {
         skipWhile(fastIsDigit);
     }
@@ -406,7 +401,7 @@ export function splitIntoWords(s: string): WordInName[] {
         return i - intervalStart;
     }
 
-    for (; ;) {
+    for (;;) {
         skipNonWord();
         if (atEnd()) break;
 
@@ -442,7 +437,7 @@ export function splitIntoWords(s: string): WordInName[] {
     for (const [start, end, allUpper] of intervals) {
         const word = s.slice(start, end);
         const isAcronym = (lastLowerCaseIndex !== undefined && allUpper) || knownAcronyms.has(word.toLowerCase());
-        words.push({word, isAcronym});
+        words.push({ word, isAcronym });
     }
     return words;
 }
@@ -487,13 +482,13 @@ export function combineWords(
     for (const w of words) {
         const word = removeInvalidCharacters(w.word);
         if (word.length === 0) continue;
-        legalizedWords.push({word, isAcronym: w.isAcronym});
+        legalizedWords.push({ word, isAcronym: w.isAcronym });
     }
 
     if (legalizedWords.length === 0) {
         const validEmpty = removeInvalidCharacters("empty");
         assert(validEmpty.length > 0, 'Word "empty" is invalid in target language');
-        legalizedWords.push({word: validEmpty, isAcronym: false});
+        legalizedWords.push({ word: validEmpty, isAcronym: false });
     }
 
     const styledWords: string[] = [];

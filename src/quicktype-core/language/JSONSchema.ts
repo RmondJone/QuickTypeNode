@@ -1,22 +1,22 @@
-import {iterableFirst, mapFirst} from "collection-utils";
+import { mapFirst, iterableFirst } from "collection-utils";
 
-import {TargetLanguage} from "../TargetLanguage";
-import {EnumType, ObjectType, transformedStringTypeTargetTypeKindsMap, Type, UnionType} from "../Type";
-import {matchTypeExhaustive} from "../TypeUtils";
-import {ConvenienceRenderer} from "../ConvenienceRenderer";
-import {funPrefixNamer, Name, Namer} from "../Naming";
+import { TargetLanguage } from "../TargetLanguage";
+import { Type, UnionType, EnumType, ObjectType, transformedStringTypeTargetTypeKindsMap } from "../Type";
+import { matchTypeExhaustive } from "../TypeUtils";
+import { ConvenienceRenderer } from "../ConvenienceRenderer";
+import { Namer, funPrefixNamer, Name } from "../Naming";
 import {
-    allUpperWordStyle,
+    legalizeCharacters,
+    splitIntoWords,
     combineWords,
     firstUpperWordStyle,
-    legalizeCharacters,
-    splitIntoWords
+    allUpperWordStyle
 } from "../support/Strings";
-import {defined, panic} from "../support/Support";
-import {getNoStringTypeMapping, StringTypeMapping} from "../TypeBuilder";
-import {addDescriptionToSchema} from "../attributes/Description";
-import {Option} from "../RendererOptions";
-import {RenderContext} from "../Renderer";
+import { defined, panic } from "../support/Support";
+import { StringTypeMapping, getNoStringTypeMapping } from "../TypeBuilder";
+import { addDescriptionToSchema } from "../attributes/Description";
+import { Option } from "../RendererOptions";
+import { RenderContext } from "../Renderer";
 
 export class JSONSchemaTargetLanguage extends TargetLanguage {
     constructor() {
@@ -96,11 +96,11 @@ export class JSONSchemaRenderer extends ConvenienceRenderer {
         if (types.size === 1) {
             return this.schemaForType(first);
         }
-        return {anyOf: Array.from(types).map((t: Type) => this.schemaForType(t))};
+        return { anyOf: Array.from(types).map((t: Type) => this.schemaForType(t)) };
     }
 
     private makeRef(t: Type): Schema {
-        return {$ref: `#/definitions/${this.nameForType(t)}`};
+        return { $ref: `#/definitions/${this.nameForType(t)}` };
     }
 
     private addAttributesToSchema(t: Type, schema: Schema): void {
@@ -117,12 +117,12 @@ export class JSONSchemaRenderer extends ConvenienceRenderer {
                 return panic("none type should have been replaced");
             },
             _anyType => ({}),
-            _nullType => ({type: "null"}),
-            _boolType => ({type: "boolean"}),
-            _integerType => ({type: "integer"}),
-            _doubleType => ({type: "number"}),
-            _stringType => ({type: "string"}),
-            arrayType => ({type: "array", items: this.schemaForType(arrayType.items)}),
+            _nullType => ({ type: "null" }),
+            _boolType => ({ type: "boolean" }),
+            _integerType => ({ type: "integer" }),
+            _doubleType => ({ type: "number" }),
+            _stringType => ({ type: "string" }),
+            arrayType => ({ type: "array", items: this.schemaForType(arrayType.items) }),
             classType => this.makeRef(classType),
             mapType => this.definitionForObject(mapType, undefined),
             objectType => this.makeRef(objectType),
@@ -139,7 +139,7 @@ export class JSONSchemaRenderer extends ConvenienceRenderer {
                 if (target === undefined) {
                     return panic(`Unknown transformed string type ${transformedStringType.kind}`);
                 }
-                return {type: "string", format: target.jsonSchema};
+                return { type: "string", format: target.jsonSchema };
             }
         );
         if (schema.$ref === undefined) {
@@ -193,7 +193,7 @@ export class JSONSchemaRenderer extends ConvenienceRenderer {
     }
 
     private definitionForEnum(e: EnumType, title: string): Schema {
-        const schema = {type: "string", enum: Array.from(e.cases), title};
+        const schema = { type: "string", enum: Array.from(e.cases), title };
         this.addAttributesToSchema(e, schema);
         return schema;
     }
@@ -201,7 +201,7 @@ export class JSONSchemaRenderer extends ConvenienceRenderer {
     protected emitSourceStructure(): void {
         // FIXME: Find a good way to do multiple top-levels.  Maybe multiple files?
         const topLevelType = this.topLevels.size === 1 ? this.schemaForType(defined(mapFirst(this.topLevels))) : {};
-        const schema = Object.assign({$schema: "http://json-schema.org/draft-06/schema#"}, topLevelType);
+        const schema = Object.assign({ $schema: "http://json-schema.org/draft-06/schema#" }, topLevelType);
         const definitions: { [name: string]: Schema } = {};
         this.forEachObject("none", (o: ObjectType, name: Name) => {
             const title = defined(this.names.get(name));

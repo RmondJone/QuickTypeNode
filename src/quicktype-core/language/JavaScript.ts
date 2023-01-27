@@ -1,30 +1,37 @@
-import {arrayIntercalate} from "collection-utils";
-
-import {ClassProperty, ClassType, ObjectType, PrimitiveStringTypeKind, TransformedStringTypeKind, Type} from "../Type";
-import {directlyReachableSingleNamedType, matchType} from "../TypeUtils";
-import {acronymOption, acronymStyle, AcronymStyleOptions} from "../support/Acronyms";
-import {convertersOption, ConvertersOptions} from "../support/Converters";
+import { arrayIntercalate } from "collection-utils";
 
 import {
-    allLowerWordStyle,
-    camelCase,
+    TransformedStringTypeKind,
+    PrimitiveStringTypeKind,
+    Type,
+    ClassProperty,
+    ClassType,
+    ObjectType
+} from "../Type";
+import { matchType, directlyReachableSingleNamedType } from "../TypeUtils";
+import { acronymOption, acronymStyle, AcronymStyleOptions } from "../support/Acronyms";
+import { convertersOption, ConvertersOptions } from "../support/Converters";
+
+import {
+    utf16LegalizeCharacters,
+    utf16StringEscape,
+    splitIntoWords,
     capitalize,
     combineWords,
     firstUpperWordStyle,
-    splitIntoWords,
-    utf16LegalizeCharacters,
-    utf16StringEscape
+    camelCase,
+    allLowerWordStyle
 } from "../support/Strings";
-import {panic} from "../support/Support";
+import { panic } from "../support/Support";
 
-import {modifySource, Sourcelike} from "../Source";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {ConvenienceRenderer} from "../ConvenienceRenderer";
-import {TargetLanguage} from "../TargetLanguage";
-import {StringTypeMapping} from "../TypeBuilder";
-import {BooleanOption, EnumOption, getOptionValues, Option, OptionValues} from "../RendererOptions";
-import {RenderContext} from "../Renderer";
-import {isES3IdentifierPart, isES3IdentifierStart} from "./JavaScriptUnicodeMaps";
+import { Sourcelike, modifySource } from "../Source";
+import { Namer, Name, funPrefixNamer } from "../Naming";
+import { ConvenienceRenderer } from "../ConvenienceRenderer";
+import { TargetLanguage } from "../TargetLanguage";
+import { StringTypeMapping } from "../TypeBuilder";
+import { BooleanOption, Option, OptionValues, getOptionValues, EnumOption } from "../RendererOptions";
+import { RenderContext } from "../Renderer";
+import { isES3IdentifierPart, isES3IdentifierStart } from "./JavaScriptUnicodeMaps";
 
 export const javaScriptOptions = {
     acronymStyle: acronymOption(AcronymStyleOptions.Pascal),
@@ -59,11 +66,7 @@ export type JavaScriptTypeAnnotations = {
 };
 
 export class JavaScriptTargetLanguage extends TargetLanguage {
-    constructor(
-        displayName: string = "JavaScript",
-        names: string[] = ["javascript", "js", "jsx"],
-        extension: string = "js"
-    ) {
+    constructor(displayName = "JavaScript", names: string[] = ["javascript", "js", "jsx"], extension = "js") {
         super(displayName, names, extension);
     }
 
@@ -208,7 +211,7 @@ export class JavaScriptRenderer extends ConvenienceRenderer {
     }
 
     emitTypeMap() {
-        const {any: anyAnnotation} = this.typeAnnotations;
+        const { any: anyAnnotation } = this.typeAnnotations;
 
         this.emitBlock(`const typeMap${anyAnnotation} = `, ";", () => {
             this.forEachObject("none", (t: ObjectType, name: Name) => {
@@ -333,11 +336,25 @@ export class JavaScriptRenderer extends ConvenienceRenderer {
             } = this.typeAnnotations;
             this.ensureBlankLine();
             this
-                .emitMultiline(`function invalidValue(typ${anyAnnotation}, val${anyAnnotation}, key${anyAnnotation} = '')${neverAnnotation} {
-    if (key) {
-        throw Error(\`Invalid value for key \"\${key}\". Expected type \${JSON.stringify(typ)} but got \${JSON.stringify(val)}\`);
+                .emitMultiline(`function invalidValue(typ${anyAnnotation}, val${anyAnnotation}, key${anyAnnotation}, parent${anyAnnotation} = '')${neverAnnotation} {
+    const prettyTyp = prettyTypeName(typ);
+    const parentText = parent ? \` on \${parent}\` : '';
+    const keyText = key ? \` for key "\${key}"\` : '';
+    throw Error(\`Invalid value\${keyText}\${parentText}. Expected \${prettyTyp} but got \${JSON.stringify(val)}\`);
+}
+
+function prettyTypeName(typ${anyAnnotation})${stringAnnotation} {
+    if (Array.isArray(typ)) {
+        if (typ.length === 2 && typ[0] === undefined) {
+            return \`an optional \${prettyTypeName(typ[1])}\`;
+        } else {
+            return \`one of [\${typ.map(a => { return prettyTypeName(a); }).join(", ")}]\`;
+        }
+    } else if (typeof typ === "object" && typ.literal !== undefined) {
+        return typ.literal;
+    } else {
+        return typeof typ;
     }
-    throw Error(\`Invalid value \${JSON.stringify(val)} for type \${JSON.stringify(typ)}\`, );
 }
 
 function jsonToJSProps(typ${anyAnnotation})${anyAnnotation} {
@@ -358,10 +375,10 @@ function jsToJSONProps(typ${anyAnnotation})${anyAnnotation} {
     return typ.jsToJSON;
 }
 
-function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnotation}, key${anyAnnotation} = '')${anyAnnotation} {
+function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnotation}, key${anyAnnotation} = '', parent${anyAnnotation} = '')${anyAnnotation} {
     function transformPrimitive(typ${stringAnnotation}, val${anyAnnotation})${anyAnnotation} {
         if (typeof typ === typeof val) return val;
-        return invalidValue(typ, val, key);
+        return invalidValue(typ, val, key, parent);
     }
 
     function transformUnion(typs${anyArrayAnnotation}, val${anyAnnotation})${anyAnnotation} {
@@ -373,17 +390,17 @@ function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnota
                 return transform(val, typ, getProps);
             } catch (_) {}
         }
-        return invalidValue(typs, val);
+        return invalidValue(typs, val, key, parent);
     }
 
     function transformEnum(cases${stringArrayAnnotation}, val${anyAnnotation})${anyAnnotation} {
         if (cases.indexOf(val) !== -1) return val;
-        return invalidValue(cases, val);
+        return invalidValue(cases.map(a => { return l(a); }), val, key, parent);
     }
 
     function transformArray(typ${anyAnnotation}, val${anyAnnotation})${anyAnnotation} {
         // val must be an array with no invalid elements
-        if (!Array.isArray(val)) return invalidValue("array", val);
+        if (!Array.isArray(val)) return invalidValue(l("array"), val, key, parent);
         return val.map(el => transform(el, typ, getProps));
     }
 
@@ -393,27 +410,27 @@ function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnota
         }
         const d = new Date(val);
         if (isNaN(d.valueOf())) {
-            return invalidValue("Date", val);
+            return invalidValue(l("Date"), val, key, parent);
         }
         return d;
     }
 
     function transformObject(props${anyMapAnnotation}, additional${anyAnnotation}, val${anyAnnotation})${anyAnnotation} {
         if (val === null || typeof val !== "object" || Array.isArray(val)) {
-            return invalidValue("object", val);
+            return invalidValue(l(ref || "object"), val, key, parent);
         }
         const result${anyAnnotation} = {};
         Object.getOwnPropertyNames(props).forEach(key => {
             const prop = props[key];
             const v = Object.prototype.hasOwnProperty.call(val, key) ? val[key] : undefined;
-            result[prop.key] = transform(v, prop.typ, getProps, prop.key);
+            result[prop.key] = transform(v, prop.typ, getProps, key, ref);
         });
         Object.getOwnPropertyNames(val).forEach(key => {
             if (!Object.prototype.hasOwnProperty.call(props, key)) {
                 result[key] = ${
                     this._jsOptions.runtimeTypecheckIgnoreUnknownProperties
                         ? `val[key]`
-                        : `transform(val[key], additional, getProps, key)`
+                        : `transform(val[key], additional, getProps, key, ref)`
                 };
             }
         });
@@ -423,10 +440,12 @@ function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnota
     if (typ === "any") return val;
     if (typ === null) {
         if (val === null) return val;
-        return invalidValue(typ, val);
+        return invalidValue(typ, val, key, parent);
     }
-    if (typ === false) return invalidValue(typ, val);
+    if (typ === false) return invalidValue(typ, val, key, parent);
+    let ref${anyAnnotation} = undefined;
     while (typeof typ === "object" && typ.ref !== undefined) {
+        ref = typ.ref;
         typ = typeMap[typ.ref];
     }
     if (Array.isArray(typ)) return transformEnum(typ, val);
@@ -434,7 +453,7 @@ function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnota
         return typ.hasOwnProperty("unionMembers") ? transformUnion(typ.unionMembers, val)
             : typ.hasOwnProperty("arrayItems")    ? transformArray(typ.arrayItems, val)
             : typ.hasOwnProperty("props")         ? transformObject(getProps(typ), typ.additional, val)
-            : invalidValue(typ, val);
+            : invalidValue(typ, val, key, parent);
     }
     // Numbers can be parsed by Date but shouldn't be.
     if (typ === Date && typeof val !== "number") return transformDate(val);
@@ -447,6 +466,10 @@ ${this.castFunctionLines[0]} {
 
 ${this.castFunctionLines[1]} {
     return transform(val, typ, jsToJSONProps);
+}
+
+function l(typ${anyAnnotation}) {
+    return { literal: typ };
 }
 
 function a(typ${anyAnnotation}) {

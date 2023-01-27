@@ -1,6 +1,6 @@
-import {Base64} from "js-base64";
+import { Base64 } from "js-base64";
 import * as pako from "pako";
-import {messageError} from "../Messages";
+import { messageError } from "../Messages";
 import * as YAML from "yaml";
 
 export type StringMap = { [name: string]: any };
@@ -60,17 +60,17 @@ export function nonNull<T>(x: T | null): T {
 }
 
 export function assertNever(x: never): never {
-    return messageError("InternalError", {message: `Unexpected object ${x as any}`});
+    return messageError("InternalError", { message: `Unexpected object ${x as any}` });
 }
 
-export function assert(condition: boolean, message: string = "Assertion failed"): void {
+export function assert(condition: boolean, message = "Assertion failed"): void {
     if (!condition) {
-        return messageError("InternalError", {message});
+        return messageError("InternalError", { message });
     }
 }
 
 export function panic(message: string): never {
-    return messageError("InternalError", {message});
+    return messageError("InternalError", { message });
 }
 
 export function mustNotHappen(): never {
@@ -102,10 +102,10 @@ export function errorMessage(e: any): string {
 
 export function inflateBase64(encoded: string): string {
     const bytes = Base64.atob(encoded);
-    return pako.inflate(bytes, {to: "string"});
+    return pako.inflate(bytes, { to: "string" });
 }
 
-export function parseJSON(text: string, description: string, address: string = "<unknown>"): any {
+export function parseJSON(text: string, description: string, address = "<unknown>"): any {
     try {
         // https://gist.github.com/pbakondy/f5045eff725193dad9c7
         if (text.charCodeAt(0) === 0xfeff) {
@@ -121,7 +121,7 @@ export function parseJSON(text: string, description: string, address: string = "
             message = `Unknown exception ${e}`;
         }
 
-        return messageError("MiscJSONParseError", {description, address, message});
+        return messageError("MiscJSONParseError", { description, address, message });
     }
 }
 

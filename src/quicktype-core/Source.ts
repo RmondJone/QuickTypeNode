@@ -1,9 +1,9 @@
-import {arrayIntercalate, iterableMax, withDefault} from "collection-utils";
+import { arrayIntercalate, iterableMax, withDefault } from "collection-utils";
 
-import {AnnotationData} from "./Annotation";
-import {Name} from "./Naming";
-import {assert, assertNever, defined, panic} from "./support/Support";
-import {repeatString} from "./support/Strings";
+import { AnnotationData } from "./Annotation";
+import { Name } from "./Naming";
+import { defined, assertNever, panic, assert } from "./support/Support";
+import { repeatString } from "./support/Strings";
 
 export type Source =
     | TextSource
@@ -59,13 +59,11 @@ export interface ModifiedSource {
 export function newline(): NewlineSource {
     // We're returning a new object instead of using a singleton
     // here because `Renderer` will modify `indentationChange`.
-    return {kind: "newline", indentationChange: 0};
+    return { kind: "newline", indentationChange: 0 };
 }
 
 export type Sourcelike = Source | string | Name | SourcelikeArray;
-
-export interface SourcelikeArray extends Array<Sourcelike> {
-}
+export interface SourcelikeArray extends Array<Sourcelike> {}
 
 export function sourcelikeToSource(sl: Sourcelike): Source {
     if (sl instanceof Array) {
@@ -77,15 +75,18 @@ export function sourcelikeToSource(sl: Sourcelike): Source {
     if (typeof sl === "string") {
         const lines = sl.split("\n");
         if (lines.length === 1) {
-            return {kind: "text", text: sl};
+            return { kind: "text", text: sl };
         }
         return {
             kind: "sequence",
-            sequence: arrayIntercalate(newline(), lines.map((l: string) => ({kind: "text", text: l} as Source)))
+            sequence: arrayIntercalate(
+                newline(),
+                lines.map((l: string) => ({ kind: "text", text: l } as Source))
+            )
         };
     }
     if (sl instanceof Name) {
-        return {kind: "name", named: sl};
+        return { kind: "name", named: sl };
     }
     return sl;
 }
@@ -182,7 +183,7 @@ export function serializeRenderResult(
     }
 
     function currentLocation(): Location {
-        return {line: lines.length, column: flattenCurrentLine().length};
+        return { line: lines.length, column: flattenCurrentLine().length };
     }
 
     function finishLine(): void {
@@ -223,7 +224,7 @@ export function serializeRenderResult(
                     const rowWidths = defined(widths[y]);
                     for (let x = 0; x < numColumns; x++) {
                         const colWidth = columnWidths[x];
-                        const src = withDefault<Source>(row[x], {kind: "text", text: ""});
+                        const src = withDefault<Source>(row[x], { kind: "text", text: "" });
                         const srcWidth = withDefault<number>(rowWidths[x], 0);
                         serializeToStringArray(src);
                         if (x < numColumns - 1 && srcWidth < colWidth) {
@@ -240,7 +241,7 @@ export function serializeRenderResult(
                 const start = currentLocation();
                 serializeToStringArray(source.source);
                 const end = currentLocation();
-                annotations.push({annotation: source.annotation, span: {start, end}});
+                annotations.push({ annotation: source.annotation, span: { start, end } });
                 break;
             case "name":
                 assert(names.has(source.named), "No name for Named");
@@ -260,7 +261,7 @@ export function serializeRenderResult(
 
     serializeToStringArray(rootSource);
     finishLine();
-    return {lines, annotations: annotations};
+    return { lines, annotations: annotations };
 }
 
 export type MultiWord = {
@@ -269,7 +270,7 @@ export type MultiWord = {
 };
 
 export function singleWord(...source: Sourcelike[]): MultiWord {
-    return {source, needsParens: false};
+    return { source, needsParens: false };
 }
 
 export function multiWord(separator: Sourcelike, ...words: Sourcelike[]): MultiWord {
@@ -282,10 +283,10 @@ export function multiWord(separator: Sourcelike, ...words: Sourcelike[]): MultiW
         if (i > 0) items.push(separator);
         items.push(words[i]);
     }
-    return {source: items, needsParens: true};
+    return { source: items, needsParens: true };
 }
 
-export function parenIfNeeded({source, needsParens}: MultiWord): Sourcelike {
+export function parenIfNeeded({ source, needsParens }: MultiWord): Sourcelike {
     if (needsParens) {
         return ["(", source, ")"];
     }

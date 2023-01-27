@@ -1,5 +1,5 @@
-import {parseJSON} from "../support/Support";
-import {JSONSourceData} from "./Inputs";
+import { parseJSON } from "../support/Support";
+import { JSONSourceData } from "./Inputs";
 
 function isValidJSON(s: string): boolean {
     try {
@@ -35,11 +35,11 @@ export function sourcesFromPostmanCollection(
                 }
             }
             if (samples.length > 0) {
-                const source: JSONSourceData<string> = {name: c.name, samples};
+                const source: JSONSourceData<string> = { name: c.name, samples };
                 const sourceDescription = [c.name];
 
                 if (typeof c.request === "object") {
-                    const {method, url} = c.request;
+                    const { method, url } = c.request;
                     if (method !== undefined && typeof url === "object" && url.raw !== undefined) {
                         sourceDescription.push(`${method} ${url.raw}`);
                     }
@@ -63,5 +63,5 @@ export function sourcesFromPostmanCollection(
         description = joinedDescription;
     }
 
-    return {sources, description};
+    return { sources, description };
 }

@@ -1,10 +1,10 @@
-import {arrayIntercalate, iterableSome} from "collection-utils";
+import { iterableSome, arrayIntercalate } from "collection-utils";
 
-import {anyTypeIssueAnnotation, nullTypeIssueAnnotation} from "../Annotation";
-import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {EnumOption, getOptionValues, Option, OptionValues, StringOption} from "../RendererOptions";
-import {maybeAnnotated, modifySource, Sourcelike} from "../Source";
+import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
+import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
+import { Name, Namer, funPrefixNamer } from "../Naming";
+import { EnumOption, Option, StringOption, OptionValues, getOptionValues } from "../RendererOptions";
+import { Sourcelike, maybeAnnotated, modifySource } from "../Source";
 import {
     allLowerWordStyle,
     allUpperWordStyle,
@@ -21,8 +21,8 @@ import {
     splitIntoWords,
     utf32ConcatMap
 } from "../support/Strings";
-import {assertNever, mustNotHappen} from "../support/Support";
-import {TargetLanguage} from "../TargetLanguage";
+import { assertNever, mustNotHappen } from "../support/Support";
+import { TargetLanguage } from "../TargetLanguage";
 import {
     ArrayType,
     ClassProperty,
@@ -34,23 +34,30 @@ import {
     Type,
     UnionType
 } from "../Type";
-import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
-import {RenderContext} from "../Renderer";
+import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
+import { RenderContext } from "../Renderer";
+import { acronymOption, acronymStyle, AcronymStyleOptions } from "../support/Acronyms";
 
 export enum Framework {
     None,
     Jackson,
     Klaxon,
-    KotlinX,
+    KotlinX
 }
 
 export const kotlinOptions = {
     framework: new EnumOption(
         "framework",
         "Serialization framework",
-        [["just-types", Framework.None], ["jackson", Framework.Jackson], ["klaxon", Framework.Klaxon], ["kotlinx", Framework.KotlinX]],
+        [
+            ["just-types", Framework.None],
+            ["jackson", Framework.Jackson],
+            ["klaxon", Framework.Klaxon],
+            ["kotlinx", Framework.KotlinX]
+        ],
         "klaxon"
     ),
+    acronymStyle: acronymOption(AcronymStyleOptions.Pascal),
     packageName: new StringOption("package", "Package", "PACKAGE", "quicktype")
 };
 
@@ -60,7 +67,7 @@ export class KotlinTargetLanguage extends TargetLanguage {
     }
 
     protected getOptions(): Option<any>[] {
-        return [kotlinOptions.framework, kotlinOptions.packageName];
+        return [kotlinOptions.framework, kotlinOptions.acronymStyle, kotlinOptions.packageName];
     }
 
     get supportsOptionalClassProperties(): boolean {
@@ -154,7 +161,11 @@ function isStartCharacter(codePoint: number): boolean {
 
 const legalizeName = legalizeCharacters(isPartCharacter);
 
-function kotlinNameStyle(isUpper: boolean, original: string): string {
+function kotlinNameStyle(
+    isUpper: boolean,
+    original: string,
+    acronymsStyle: (s: string) => string = allUpperWordStyle
+): string {
     const words = splitIntoWords(original);
     return combineWords(
         words,
@@ -162,7 +173,7 @@ function kotlinNameStyle(isUpper: boolean, original: string): string {
         isUpper ? firstUpperWordStyle : allLowerWordStyle,
         firstUpperWordStyle,
         isUpper ? allUpperWordStyle : allLowerWordStyle,
-        allUpperWordStyle,
+        acronymsStyle,
         "",
         isStartCharacter
     );
@@ -179,9 +190,6 @@ function stringEscape(s: string): string {
     return _stringEscape(s).replace(/\$/g, "\\$");
 }
 
-const upperNamingFunction = funPrefixNamer("upper", s => kotlinNameStyle(true, s));
-const lowerNamingFunction = funPrefixNamer("lower", s => kotlinNameStyle(false, s));
-
 export class KotlinRenderer extends ConvenienceRenderer {
     constructor(
         targetLanguage: TargetLanguage,
@@ -196,15 +204,15 @@ export class KotlinRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_o: ObjectType, _classNamed: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForUnionMembers(_u: UnionType, _unionName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: false};
+        return { names: [], includeGlobalForbidden: false };
     }
 
     protected topLevelNameStyle(rawName: string): string {
@@ -212,11 +220,11 @@ export class KotlinRenderer extends ConvenienceRenderer {
     }
 
     protected makeNamedTypeNamer(): Namer {
-        return upperNamingFunction;
+        return funPrefixNamer("upper", s => kotlinNameStyle(true, s, acronymStyle(this._kotlinOptions.acronymStyle)));
     }
 
     protected namerForObjectProperty(): Namer {
-        return lowerNamingFunction;
+        return funPrefixNamer("lower", s => kotlinNameStyle(false, s, acronymStyle(this._kotlinOptions.acronymStyle)));
     }
 
     protected makeUnionMemberNamer(): Namer {
@@ -224,7 +232,7 @@ export class KotlinRenderer extends ConvenienceRenderer {
     }
 
     protected makeEnumCaseNamer(): Namer {
-        return upperNamingFunction;
+        return funPrefixNamer("upper", s => kotlinNameStyle(true, s, acronymStyle(this._kotlinOptions.acronymStyle)));
     }
 
     protected emitDescriptionBlock(lines: Sourcelike[]): void {
@@ -244,15 +252,15 @@ export class KotlinRenderer extends ConvenienceRenderer {
 
     // (asarazan): I've broken out the following two functions
     // because some renderers, such as kotlinx, can cope with `any`, while some get mad.
-    protected arrayType(arrayType: ArrayType, withIssues: boolean = false, _noOptional: boolean = false): Sourcelike {
+    protected arrayType(arrayType: ArrayType, withIssues = false, _noOptional = false): Sourcelike {
         return ["List<", this.kotlinType(arrayType.items, withIssues), ">"];
     }
 
-    protected mapType(mapType: MapType, withIssues: boolean = false, _noOptional: boolean = false): Sourcelike {
+    protected mapType(mapType: MapType, withIssues = false, _noOptional = false): Sourcelike {
         return ["Map<String, ", this.kotlinType(mapType.values, withIssues), ">"];
     }
 
-    protected kotlinType(t: Type, withIssues: boolean = false, noOptional: boolean = false): Sourcelike {
+    protected kotlinType(t: Type, withIssues = false, noOptional = false): Sourcelike {
         const optional = noOptional ? "" : "?";
         return matchType<Sourcelike>(
             t,
@@ -283,7 +291,6 @@ export class KotlinRenderer extends ConvenienceRenderer {
     }
 
     protected emitHeader(): void {
-        this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
         if (this.leadingComments !== undefined) {
             this.emitCommentLines(this.leadingComments);
         } else {
@@ -403,10 +410,16 @@ export class KotlinRenderer extends ConvenienceRenderer {
             {
                 let table: Sourcelike[][] = [];
                 this.forEachUnionMember(u, nonNulls, "none", null, (name, t) => {
-                    table.push([["class ", name, "(val value: ", this.kotlinType(t), ")"], [" : ", unionName, "()"]]);
+                    table.push([
+                        ["class ", name, "(val value: ", this.kotlinType(t), ")"],
+                        [" : ", unionName, "()"]
+                    ]);
                 });
                 if (maybeNull !== null) {
-                    table.push([["class ", this.nameForUnionMember(u, maybeNull), "()"], [" : ", unionName, "()"]]);
+                    table.push([
+                        ["class ", this.nameForUnionMember(u, maybeNull), "()"],
+                        [" : ", unionName, "()"]
+                    ]);
                 }
                 this.emitTable(table);
             }
@@ -595,7 +608,7 @@ export class KotlinKlaxonRenderer extends KotlinRenderer {
         );
     }
 
-    private klaxonRenameAttribute(propName: Name, jsonName: string, ignore: boolean = false): Sourcelike | undefined {
+    private klaxonRenameAttribute(propName: Name, jsonName: string, ignore = false): Sourcelike | undefined {
         const escapedName = stringEscape(jsonName);
         const namesDiffer = this.sourcelikeToString(propName) !== escapedName;
         const properties: Sourcelike[] = [];
@@ -858,7 +871,7 @@ import com.fasterxml.jackson.module.kotlin.*`);
         propName: Name,
         jsonName: string,
         required: boolean,
-        ignore: boolean = false
+        ignore = false
     ): Sourcelike | undefined {
         const escapedName = stringEscape(jsonName);
         const namesDiffer = this.sourcelikeToString(propName) !== escapedName;
@@ -1003,22 +1016,22 @@ export class KotlinXRenderer extends KotlinRenderer {
     }
 
     protected anySourceType(optional: string): Sourcelike {
-        return ["JsonObject", optional];
+        return ["JsonElement", optional];
     }
 
-    protected arrayType(arrayType: ArrayType, withIssues: boolean = false, noOptional: boolean = false): Sourcelike {
+    protected arrayType(arrayType: ArrayType, withIssues = false, noOptional = false): Sourcelike {
         const valType = this.kotlinType(arrayType.items, withIssues, true);
         const name = this.sourcelikeToString(valType);
-        if (name === "JsonObject") {
+        if (name === "JsonObject" || name === "JsonElement") {
             return "JsonArray";
         }
         return super.arrayType(arrayType, withIssues, noOptional);
     }
 
-    protected mapType(mapType: MapType, withIssues: boolean = false, noOptional: boolean = false): Sourcelike {
+    protected mapType(mapType: MapType, withIssues = false, noOptional = false): Sourcelike {
         const valType = this.kotlinType(mapType.values, withIssues, true);
         const name = this.sourcelikeToString(valType);
-        if (name === "JsonObject") {
+        if (name === "JsonObject" || name === "JsonElement") {
             return "JsonObject";
         }
         return super.mapType(mapType, withIssues, noOptional);
@@ -1044,7 +1057,11 @@ export class KotlinXRenderer extends KotlinRenderer {
         const table: Sourcelike[][] = [];
         table.push(["// val ", "json", " = Json { allowStructuredMapKeys = true }"]);
         this.forEachTopLevel("none", (_, name) => {
-            table.push(["// val ", modifySource(camelCase, name), ` = json.parse(${this.sourcelikeToString(name)}.serializer(), jsonString)`]);
+            table.push([
+                "// val ",
+                modifySource(camelCase, name),
+                ` = json.parse(${this.sourcelikeToString(name)}.serializer(), jsonString)`
+            ]);
         });
         this.emitTable(table);
     }
@@ -1073,7 +1090,7 @@ export class KotlinXRenderer extends KotlinRenderer {
         const escapedName = stringEscape(jsonName);
         const namesDiffer = this.sourcelikeToString(propName) !== escapedName;
         if (namesDiffer) {
-            return ["@SerialName(\"", escapedName, "\")"];
+            return ['@SerialName("', escapedName, '")'];
         }
         return undefined;
     }
@@ -1081,30 +1098,12 @@ export class KotlinXRenderer extends KotlinRenderer {
     protected emitEnumDefinition(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
 
-        this.emitLine(["@Serializable(with = ", enumName, ".Companion::class)"]);
+        this.emitLine(["@Serializable"]);
         this.emitBlock(["enum class ", enumName, "(val value: String)"], () => {
             let count = e.cases.size;
             this.forEachEnumCase(e, "none", (name, json) => {
-                this.emitLine(name, `("${stringEscape(json)}")`, --count === 0 ? ";" : ",");
-            });
-            this.ensureBlankLine();
-            this.emitBlock(["companion object : KSerializer<", enumName, ">"], () => {
-                this.emitBlock("override val descriptor: SerialDescriptor get()", () => {
-                    this.emitLine("return PrimitiveSerialDescriptor(\"", this._kotlinOptions.packageName, ".", enumName, "\", PrimitiveKind.STRING)");
-                });
-
-                this.emitBlock(["override fun deserialize(decoder: Decoder): ", enumName, " = when (val value = decoder.decodeString())"], () => {
-                    let table: Sourcelike[][] = [];
-                    this.forEachEnumCase(e, "none", (name, json) => {
-                        table.push([[`"${stringEscape(json)}"`], [" -> ", name]]);
-                    });
-                    table.push([["else"], [" -> throw IllegalArgumentException(\"", enumName, " could not parse: $value\")"]]);
-                    this.emitTable(table);
-                });
-
-                this.emitBlock(["override fun serialize(encoder: Encoder, value: ", enumName, ")"], () => {
-                    this.emitLine(["return encoder.encodeString(value.value)"]);
-                });
+                const jsonEnum = stringEscape(json);
+                this.emitLine(`@SerialName("${jsonEnum}") `, name, `("${jsonEnum}")`, --count === 0 ? ";" : ",");
             });
         });
     }

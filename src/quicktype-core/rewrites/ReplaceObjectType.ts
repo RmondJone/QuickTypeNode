@@ -1,11 +1,11 @@
-import {iterableFirst, mapMap, setFilter, setMap} from "collection-utils";
+import { setFilter, iterableFirst, mapMap, setMap } from "collection-utils";
 
-import {TypeGraph, TypeRef} from "../TypeGraph";
-import {StringTypeMapping} from "../TypeBuilder";
-import {GraphRewriteBuilder} from "../GraphRewriting";
-import {ClassProperty, ObjectType} from "../Type";
-import {defined} from "../support/Support";
-import {emptyTypeAttributes} from "../attributes/TypeAttributes";
+import { TypeGraph, TypeRef } from "../TypeGraph";
+import { StringTypeMapping } from "../TypeBuilder";
+import { GraphRewriteBuilder } from "../GraphRewriting";
+import { ObjectType, ClassProperty } from "../Type";
+import { defined } from "../support/Support";
+import { emptyTypeAttributes } from "../attributes/TypeAttributes";
 
 export function replaceObjectType(
     graph: TypeGraph,

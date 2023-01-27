@@ -1,4 +1,4 @@
-import {Readable} from "readable-stream";
+import { Readable } from "readable-stream";
 import bufferStream from "./buffer-stream";
 
 export interface Options {
@@ -12,7 +12,7 @@ export function getStream(inputStream: Readable, opts: Options = {}) {
         return Promise.reject(new Error("Expected a stream"));
     }
 
-    opts = Object.assign({maxBuffer: Infinity}, opts);
+    opts = Object.assign({ maxBuffer: Infinity }, opts);
 
     const maxBuffer = opts.maxBuffer || Infinity;
     let stream: any;
@@ -54,9 +54,9 @@ export function getStream(inputStream: Readable, opts: Options = {}) {
 }
 
 export function buffer(stream: Readable, opts: Options = {}) {
-    getStream(stream, Object.assign({}, opts, {encoding: "buffer"}));
+    getStream(stream, Object.assign({}, opts, { encoding: "buffer" }));
 }
 
 export function array(stream: Readable, opts: Options = {}) {
-    getStream(stream, Object.assign({}, opts, {array: true}));
+    getStream(stream, Object.assign({}, opts, { array: true }));
 }

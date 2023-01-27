@@ -1,6 +1,6 @@
-import {assert} from "./support/Support";
-import {messageError} from "./Messages";
-import {hasOwnProperty} from "collection-utils";
+import { assert } from "./support/Support";
+import { messageError } from "./Messages";
+import { hasOwnProperty } from "collection-utils";
 
 /**
  * Primary options show up in the web UI in the "Language" settings tab,
@@ -44,7 +44,7 @@ export abstract class Option<T> {
     }
 
     get cliDefinitions(): { display: OptionDefinition[]; actual: OptionDefinition[] } {
-        return {actual: [this.definition], display: [this.definition]};
+        return { actual: [this.definition], display: [this.definition] };
     }
 }
 
@@ -178,7 +178,7 @@ export class EnumOption<T> extends Option<T> {
             name = this.definition.defaultValue;
         }
         if (!hasOwnProperty(this._values, name)) {
-            return messageError("RendererUnknownOptionValue", {value: name, name: this.definition.name});
+            return messageError("RendererUnknownOptionValue", { value: name, name: this.definition.name });
         }
         return this._values[name];
     }

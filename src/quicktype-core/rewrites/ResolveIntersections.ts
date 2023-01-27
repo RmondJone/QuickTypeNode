@@ -1,40 +1,40 @@
 import {
-    iterableEvery,
-    iterableFind,
     iterableFirst,
-    mapMap,
+    iterableEvery,
+    setFilter,
     mapMapEntries,
     mapMergeWithInto,
+    mapMap,
     mapUpdateInto,
-    setFilter,
-    setIntersect,
     setMap,
+    iterableFind,
+    setIntersect,
     setUnionInto
 } from "collection-utils";
 
-import {TypeGraph, TypeRef} from "../TypeGraph";
-import {StringTypeMapping, TypeBuilder} from "../TypeBuilder";
-import {GraphRewriteBuilder, TypeLookerUp} from "../GraphRewriting";
-import {TypeAttributeMap, UnionBuilder, UnionTypeProvider} from "../UnionBuilder";
+import { TypeGraph, TypeRef } from "../TypeGraph";
+import { StringTypeMapping, TypeBuilder } from "../TypeBuilder";
+import { GraphRewriteBuilder, TypeLookerUp } from "../GraphRewriting";
+import { UnionTypeProvider, UnionBuilder, TypeAttributeMap } from "../UnionBuilder";
 import {
-    ArrayType,
-    GenericClassProperty,
     IntersectionType,
-    isNumberTypeKind,
-    isPrimitiveTypeKind,
-    ObjectType,
-    PrimitiveTypeKind,
     Type,
+    UnionType,
+    PrimitiveTypeKind,
+    ArrayType,
+    isPrimitiveTypeKind,
+    isNumberTypeKind,
+    GenericClassProperty,
     TypeKind,
-    UnionType
+    ObjectType
 } from "../Type";
-import {makeGroupsToFlatten, matchTypeExhaustive, setOperationMembersRecursively} from "../TypeUtils";
-import {assert, defined, mustNotHappen, panic} from "../support/Support";
+import { setOperationMembersRecursively, matchTypeExhaustive, makeGroupsToFlatten } from "../TypeUtils";
+import { assert, defined, panic, mustNotHappen } from "../support/Support";
 import {
     combineTypeAttributes,
+    TypeAttributes,
     emptyTypeAttributes,
-    makeTypeAttributesInferred,
-    TypeAttributes
+    makeTypeAttributesInferred
 } from "../attributes/TypeAttributes";
 
 function canResolve(t: IntersectionType): boolean {
@@ -50,7 +50,8 @@ function attributesForTypes<T extends TypeKind>(types: ReadonlySet<Type>): TypeA
 type PropertyMap = Map<string, GenericClassProperty<Set<Type>>>;
 
 class IntersectionAccumulator
-    implements UnionTypeProvider<ReadonlySet<Type>, [PropertyMap, ReadonlySet<Type> | undefined] | undefined> {
+    implements UnionTypeProvider<ReadonlySet<Type>, [PropertyMap, ReadonlySet<Type> | undefined] | undefined>
+{
     private _primitiveTypes: Set<PrimitiveTypeKind> | undefined;
     private readonly _primitiveAttributes: TypeAttributeMap<PrimitiveTypeKind> = new Map();
 
@@ -72,7 +73,7 @@ class IntersectionAccumulator
     private _objectAttributes: TypeAttributes = emptyTypeAttributes;
     private _additionalPropertyTypes: Set<Type> | undefined = new Set();
 
-    private _lostTypeAttributes: boolean = false;
+    private _lostTypeAttributes = false;
 
     private updatePrimitiveTypes(members: Iterable<Type>): void {
         const types = setFilter(members, t => isPrimitiveTypeKind(t.kind));
@@ -264,10 +265,12 @@ class IntersectionAccumulator
     }
 }
 
-class IntersectionUnionBuilder extends UnionBuilder<TypeBuilder & TypeLookerUp,
+class IntersectionUnionBuilder extends UnionBuilder<
+    TypeBuilder & TypeLookerUp,
     ReadonlySet<Type>,
-    [PropertyMap, ReadonlySet<Type> | undefined] | undefined> {
-    private _createdNewIntersections: boolean = false;
+    [PropertyMap, ReadonlySet<Type> | undefined] | undefined
+> {
+    private _createdNewIntersections = false;
 
     private makeIntersection(members: ReadonlySet<Type>, attributes: TypeAttributes): TypeRef {
         const reconstitutedMembers = setMap(members, t => this.typeBuilder.reconstituteTypeRef(t.typeRef));
@@ -341,7 +344,10 @@ export function resolveIntersections(
 
         const accumulator = new IntersectionAccumulator();
         const extraAttributes = makeTypeAttributesInferred(
-            combineTypeAttributes("intersect", Array.from(members).map(t => accumulator.addType(t)))
+            combineTypeAttributes(
+                "intersect",
+                Array.from(members).map(t => accumulator.addType(t))
+            )
         );
         const attributes = combineTypeAttributes("intersect", intersectionAttributes, extraAttributes);
 
@@ -352,10 +358,12 @@ export function resolveIntersections(
         }
         return tref;
     }
-
     // FIXME: We need to handle intersections that resolve to the same set of types.
     // See for example the intersections-nested.schema example.
-    const allIntersections = setFilter(graph.allTypesUnordered(), t => t instanceof IntersectionType) as Set<IntersectionType>;
+    const allIntersections = setFilter(
+        graph.allTypesUnordered(),
+        t => t instanceof IntersectionType
+    ) as Set<IntersectionType>;
     const resolvableIntersections = setFilter(allIntersections, canResolve);
     const groups = makeGroupsToFlatten(resolvableIntersections, undefined);
     graph = graph.rewrite("resolve intersections", stringTypeMapping, false, groups, debugPrintReconstitution, replace);

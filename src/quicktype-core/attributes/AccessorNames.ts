@@ -1,11 +1,18 @@
-import {iterableFirst, mapFromIterable, mapFromObject, mapMap, mapMergeInto, setUnionManyInto} from "collection-utils";
+import {
+    iterableFirst,
+    mapFromIterable,
+    mapMap,
+    mapFromObject,
+    setUnionManyInto,
+    mapMergeInto
+} from "collection-utils";
 
-import {TypeAttributeKind, TypeAttributes} from "./TypeAttributes";
-import {checkArray, checkStringMap, defined, isStringMap} from "../support/Support";
-import {EnumType, ObjectType, Type, UnionType} from "../Type";
-import {messageAssert} from "../Messages";
-import {JSONSchema} from "../input/JSONSchemaStore";
-import {JSONSchemaAttributes, JSONSchemaType, Ref} from "../input/JSONSchemaInput";
+import { TypeAttributeKind, TypeAttributes } from "./TypeAttributes";
+import { defined, isStringMap, checkStringMap, checkArray } from "../support/Support";
+import { EnumType, UnionType, Type, ObjectType } from "../Type";
+import { messageAssert } from "../Messages";
+import { JSONSchema } from "../input/JSONSchemaStore";
+import { Ref, JSONSchemaType, JSONSchemaAttributes } from "../input/JSONSchemaInput";
 
 export type AccessorEntry = string | Map<string, string>;
 
@@ -85,9 +92,10 @@ class UnionIdentifierTypeAttributeKind extends TypeAttributeKind<ReadonlySet<num
     }
 }
 
-export const unionIdentifierTypeAttributeKind: TypeAttributeKind<ReadonlySet<number>> = new UnionIdentifierTypeAttributeKind();
+export const unionIdentifierTypeAttributeKind: TypeAttributeKind<ReadonlySet<number>> =
+    new UnionIdentifierTypeAttributeKind();
 
-let nextUnionIdentifier: number = 0;
+let nextUnionIdentifier = 0;
 
 export function makeUnionIdentifierAttribute(): TypeAttributes {
     const attributes = unionIdentifierTypeAttributeKind.makeAttributes(new Set([nextUnionIdentifier]));
@@ -109,7 +117,8 @@ class UnionMemberNamesTypeAttributeKind extends TypeAttributeKind<Map<number, Ac
     }
 }
 
-export const unionMemberNamesTypeAttributeKind: TypeAttributeKind<Map<number, AccessorEntry>> = new UnionMemberNamesTypeAttributeKind();
+export const unionMemberNamesTypeAttributeKind: TypeAttributeKind<Map<number, AccessorEntry>> =
+    new UnionMemberNamesTypeAttributeKind();
 
 export function makeUnionMemberNamesAttribute(unionAttributes: TypeAttributes, entry: AccessorEntry): TypeAttributes {
     const identifiers = defined(unionIdentifierTypeAttributeKind.tryGetInAttributes(unionAttributes));
@@ -153,7 +162,7 @@ export function unionMemberName(u: UnionType, member: Type, language: string): [
         isFixed = false;
     }
 
-    messageAssert(size === 1, "SchemaMoreThanOneUnionMemberName", {names: Array.from(names)});
+    messageAssert(size === 1, "SchemaMoreThanOneUnionMemberName", { names: Array.from(names) });
     return [first, isFixed];
 }
 
@@ -186,7 +195,7 @@ export function accessorNamesAttributeProducer(
     if (maybeAccessors === undefined) return undefined;
 
     if (cases === undefined) {
-        return {forType: accessorNamesTypeAttributeKind.makeAttributes(makeAccessorNames(maybeAccessors))};
+        return { forType: accessorNamesTypeAttributeKind.makeAttributes(makeAccessorNames(maybeAccessors)) };
     } else {
         const identifierAttribute = makeUnionIdentifierAttribute();
 
@@ -198,6 +207,6 @@ export function accessorNamesAttributeProducer(
         const caseAttributes = accessors.map(accessor =>
             makeUnionMemberNamesAttribute(identifierAttribute, makeAccessorEntry(accessor))
         );
-        return {forUnion: identifierAttribute, forCases: caseAttributes};
+        return { forUnion: identifierAttribute, forCases: caseAttributes };
     }
 }

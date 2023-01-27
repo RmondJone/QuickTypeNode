@@ -1,17 +1,17 @@
 import {
-    iterableFirst,
     mapFilterMap,
     mapFromObject,
-    mapMergeWithInto,
-    setSubtract,
     setUnion,
-    setUnionManyInto
+    iterableFirst,
+    setUnionManyInto,
+    mapMergeWithInto,
+    setSubtract
 } from "collection-utils";
 
-import {emptyTypeAttributes, TypeAttributeKind} from "./TypeAttributes";
-import {JSONSchemaAttributes, JSONSchemaType, PathElement, PathElementKind, Ref} from "../input/JSONSchemaInput";
-import {JSONSchema} from "../input/JSONSchemaStore";
-import {Type} from "../Type";
+import { TypeAttributeKind, emptyTypeAttributes } from "./TypeAttributes";
+import { JSONSchemaType, Ref, JSONSchemaAttributes, PathElementKind, PathElement } from "../input/JSONSchemaInput";
+import { JSONSchema } from "../input/JSONSchemaStore";
+import { Type } from "../Type";
 
 export function addDescriptionToSchema(
     schema: { [name: string]: unknown },
@@ -42,7 +42,7 @@ class DescriptionTypeAttributeKind extends TypeAttributeKind<ReadonlySet<string>
         let result = iterableFirst(descriptions);
         if (result === undefined) return undefined;
         if (result.length > 5 + 3) {
-            result = `${result.substr(0, 5)}...`;
+            result = `${result.slice(0, 5)}...`;
         }
         if (descriptions.size > 1) {
             result = `${result}, ...`;
@@ -77,7 +77,8 @@ class PropertyDescriptionsTypeAttributeKind extends TypeAttributeKind<Map<string
     }
 }
 
-export const propertyDescriptionsTypeAttributeKind: TypeAttributeKind<Map<string, ReadonlySet<string>>> = new PropertyDescriptionsTypeAttributeKind();
+export const propertyDescriptionsTypeAttributeKind: TypeAttributeKind<Map<string, ReadonlySet<string>>> =
+    new PropertyDescriptionsTypeAttributeKind();
 
 function isPropertiesKey(el: PathElement): boolean {
     return el.kind === PathElementKind.KeyOrIndex && el.key === "properties";
@@ -122,5 +123,5 @@ export function descriptionAttributeProducer(
         }
     }
 
-    return {forType: description, forObject: propertyDescription};
+    return { forType: description, forObject: propertyDescription };
 }

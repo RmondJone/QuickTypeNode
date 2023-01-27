@@ -1,19 +1,19 @@
 import {
-    iterableEvery,
-    iterableFind,
-    iterableFirst,
-    iterableMinBy,
-    iterableSome,
-    mapMergeInto,
-    setFilter,
-    setFilterMap,
-    setGroupBy,
-    setMap,
     setUnion,
-    setUnionInto
+    setUnionInto,
+    setMap,
+    setFilter,
+    iterableFind,
+    iterableSome,
+    iterableMinBy,
+    setGroupBy,
+    setFilterMap,
+    iterableFirst,
+    iterableEvery,
+    mapMergeInto
 } from "collection-utils";
 
-import {assert, defined, panic} from "./support/Support";
+import { defined, assert, panic } from "./support/Support";
 
 export class Namespace {
     readonly forbiddenNamespaces: ReadonlySet<Namespace>;
@@ -126,9 +126,9 @@ export class Namer {
         let suffixNumber = 1;
         for (const name of namesToPrefix) {
             const originalName: string = defined(iterableFirst(name.proposeUnstyledNames(names)));
-            for (; ;) {
+            for (;;) {
                 let nameToTry: string;
-                const {done, value: prefix} = prefixes.next();
+                const { done, value: prefix } = prefixes.next();
                 if (!done) {
                     nameToTry = `${prefix}_${originalName}`;
                 } else {
@@ -177,8 +177,7 @@ export abstract class Name {
     private readonly _associates = new Set<AssociatedName>();
 
     // If a Named is fixed, the namingFunction is undefined.
-    constructor(private readonly _namingFunction: Namer | undefined, readonly order: number) {
-    }
+    constructor(private readonly _namingFunction: Namer | undefined, readonly order: number) {}
 
     addAssociate(associate: AssociatedName): void {
         this._associates.add(associate);
@@ -372,7 +371,7 @@ export function assignNames(rootNamespaces: Iterable<Namespace>): ReadonlyMap<Na
         }
     }
 
-    for (; ;) {
+    for (;;) {
         // 1. Find a namespace whose forbiddens are all fully named, and which has
         //    at least one unnamed Named that has all its dependencies satisfied.
         //    If no such namespace exists we're either done, or there's an unallowed
@@ -393,7 +392,7 @@ export function assignNames(rootNamespaces: Iterable<Namespace>): ReadonlyMap<Na
         //    members of a set propose the same name and have the same naming
         //    function.
 
-        for (; ;) {
+        for (;;) {
             const allReadyNames = setFilter(readyNamespace.members, ctx.isReadyToBeNamed);
             const minOrderName = iterableMinBy(allReadyNames, n => n.order);
             if (minOrderName === undefined) break;

@@ -1,26 +1,26 @@
-import {TargetLanguage} from "../TargetLanguage";
-import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
+import { TargetLanguage } from "../TargetLanguage";
+import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
 import {
-    allLowerWordStyle,
-    combineWords,
-    escapeNonPrintableMapper,
-    firstUpperWordStyle,
-    intToHex,
-    isAscii,
-    isLetterOrUnderscore,
-    isLetterOrUnderscoreOrDigit,
-    isPrintable,
     legalizeCharacters,
     splitIntoWords,
-    utf32ConcatMap
+    isLetterOrUnderscoreOrDigit,
+    combineWords,
+    allLowerWordStyle,
+    firstUpperWordStyle,
+    intToHex,
+    utf32ConcatMap,
+    escapeNonPrintableMapper,
+    isPrintable,
+    isAscii,
+    isLetterOrUnderscore
 } from "../support/Strings";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {ClassType, EnumType, Type, UnionType} from "../Type";
-import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
-import {maybeAnnotated, Sourcelike} from "../Source";
-import {anyTypeIssueAnnotation, nullTypeIssueAnnotation} from "../Annotation";
-import {Option} from "../RendererOptions";
-import {RenderContext} from "../Renderer";
+import { Name, Namer, funPrefixNamer } from "../Naming";
+import { UnionType, Type, ClassType, EnumType } from "../Type";
+import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
+import { Sourcelike, maybeAnnotated } from "../Source";
+import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
+import { Option } from "../RendererOptions";
+import { RenderContext } from "../Renderer";
 
 export class CrystalTargetLanguage extends TargetLanguage {
     protected makeRenderer(renderContext: RenderContext): CrystalRenderer {
@@ -253,15 +253,15 @@ export class CrystalRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_c: ClassType, _className: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForUnionMembers(_u: UnionType, _unionName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected get commentLineStart(): string {
@@ -277,7 +277,7 @@ export class CrystalRenderer extends ConvenienceRenderer {
         return kind === "array" || kind === "map";
     }
 
-    private crystalType(t: Type, withIssues: boolean = false): Sourcelike {
+    private crystalType(t: Type, withIssues = false): Sourcelike {
         return matchType<Sourcelike>(
             t,
             _anyType => maybeAnnotated(withIssues, anyTypeIssueAnnotation, "JSON::Any?"),

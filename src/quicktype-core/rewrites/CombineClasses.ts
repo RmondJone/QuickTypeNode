@@ -1,11 +1,11 @@
-import {ClassProperty, ClassType, setOperationCasesEqual, Type} from "../Type";
-import {combineTypeAttributesOfTypes, nonNullTypeCases} from "../TypeUtils";
+import { ClassType, Type, ClassProperty, setOperationCasesEqual } from "../Type";
+import { nonNullTypeCases, combineTypeAttributesOfTypes } from "../TypeUtils";
 
-import {GraphRewriteBuilder} from "../GraphRewriting";
-import {assert, panic} from "../support/Support";
-import {TypeGraph, TypeRef} from "../TypeGraph";
-import {unifyTypes, unionBuilderForUnification} from "../UnifyClasses";
-import {RunContext} from "../Run";
+import { GraphRewriteBuilder } from "../GraphRewriting";
+import { assert, panic } from "../support/Support";
+import { TypeGraph, TypeRef } from "../TypeGraph";
+import { unifyTypes, unionBuilderForUnification } from "../UnifyClasses";
+import { RunContext } from "../Run";
 
 const REQUIRED_OVERLAP = 3 / 4;
 
@@ -117,7 +117,7 @@ function findSimilarityCliques(
         if (cliqueIndex === undefined) {
             // New clique
             cliqueIndex = cliques.length;
-            cliques.push({members: [c], prototypes: [c]});
+            cliques.push({ members: [c], prototypes: [c] });
         }
 
         // Move the clique we just added to to the front, in the hope that

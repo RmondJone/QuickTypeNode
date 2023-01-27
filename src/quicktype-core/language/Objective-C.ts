@@ -1,29 +1,29 @@
-import {iterableFirst, iterableSome, mapContains, mapFirst, mapSome} from "collection-utils";
+import { iterableSome, iterableFirst, mapContains, mapFirst, mapSome } from "collection-utils";
 
-import {TargetLanguage} from "../TargetLanguage";
-import {ArrayType, ClassProperty, ClassType, EnumType, MapType, Type, UnionType} from "../Type";
-import {isAnyOrNull, matchType, nullableFromUnion} from "../TypeUtils";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {modifySource, Sourcelike} from "../Source";
+import { TargetLanguage } from "../TargetLanguage";
+import { Type, ClassType, EnumType, ArrayType, MapType, UnionType, ClassProperty } from "../Type";
+import { matchType, nullableFromUnion, isAnyOrNull } from "../TypeUtils";
+import { Name, Namer, funPrefixNamer } from "../Naming";
+import { Sourcelike, modifySource } from "../Source";
 import {
-    addPrefixIfNecessary,
-    allLowerWordStyle,
-    allUpperWordStyle,
-    camelCase,
-    combineWords,
-    fastIsUpperCase,
-    firstUpperWordStyle,
-    repeatString,
     splitIntoWords,
+    combineWords,
+    firstUpperWordStyle,
+    allUpperWordStyle,
+    allLowerWordStyle,
+    camelCase,
+    utf16LegalizeCharacters,
     stringEscape,
-    utf16LegalizeCharacters
+    addPrefixIfNecessary,
+    repeatString,
+    fastIsUpperCase
 } from "../support/Strings";
-import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
-import {BooleanOption, EnumOption, getOptionValues, Option, OptionValues, StringOption} from "../RendererOptions";
-import {assert, defined} from "../support/Support";
-import {RenderContext} from "../Renderer";
+import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
+import { StringOption, BooleanOption, EnumOption, Option, getOptionValues, OptionValues } from "../RendererOptions";
+import { assert, defined } from "../support/Support";
+import { RenderContext } from "../Renderer";
 
-const unicode = require("@mark.probst/unicode-properties");
+import unicode from "unicode-properties";
 
 export type MemoryAttribute = "assign" | "strong" | "copy";
 export type OutputFeatures = { interface: boolean; implementation: boolean };
@@ -33,9 +33,9 @@ const DEFAULT_CLASS_PREFIX = "QT";
 
 export const objcOptions = {
     features: new EnumOption("features", "Interface and implementation", [
-        ["all", {interface: true, implementation: true}],
-        ["interface", {interface: true, implementation: false}],
-        ["implementation", {interface: false, implementation: true}]
+        ["all", { interface: true, implementation: true }],
+        ["interface", { interface: true, implementation: false }],
+        ["implementation", { interface: false, implementation: true }]
     ]),
     justTypes: new BooleanOption("just-types", "Plain types only", false),
     marshallingFunctions: new BooleanOption("functions", "C-style functions", false),
@@ -81,7 +81,7 @@ function typeNameStyle(prefix: string, original: string): string {
     return addPrefixIfNecessary(prefix, result);
 }
 
-function propertyNameStyle(original: string, isBool: boolean = false): string {
+function propertyNameStyle(original: string, isBool = false): string {
     // Objective-C developers are uncomfortable with property "id"
     // so we use an alternate name in this special case.
     if (original === "id") {
@@ -92,16 +92,16 @@ function propertyNameStyle(original: string, isBool: boolean = false): string {
 
     if (isBool) {
         if (words.length === 0) {
-            words = [{word: "flag", isAcronym: false}];
+            words = [{ word: "flag", isAcronym: false }];
         } else if (!words[0].isAcronym && booleanPrefixes.indexOf(words[0].word) < 0) {
-            words = [{word: "is", isAcronym: false}, ...words];
+            words = [{ word: "is", isAcronym: false }, ...words];
         }
     }
 
     // Properties cannot even begin with any of the forbidden names
     // For example, properies named new* are treated differently by ARC
     if (words.length > 0 && forbiddenPropertyNames.indexOf(words[0].word) >= 0) {
-        words = [{word: "the", isAcronym: false}, ...words];
+        words = [{ word: "the", isAcronym: false }, ...words];
     }
 
     return combineWords(
@@ -216,7 +216,7 @@ const forbiddenForEnumCases = ["new", staticEnumValuesIdentifier];
 function splitExtension(filename: string): [string, string] {
     const i = filename.lastIndexOf(".");
     const extension = i !== -1 ? filename.split(".").pop() : "m";
-    filename = i !== -1 ? filename.substr(0, i) : filename;
+    filename = i !== -1 ? filename.slice(0, i) : filename;
     return [filename, extension === undefined ? "m" : extension];
 }
 
@@ -247,7 +247,7 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
             firstNonUpper += 1;
         }
         if (firstNonUpper < 2) return DEFAULT_CLASS_PREFIX;
-        return name.substr(0, firstNonUpper - 1);
+        return name.slice(0, firstNonUpper - 1);
     }
 
     protected forbiddenNamesForGlobalNamespace(): string[] {
@@ -255,11 +255,11 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_c: ClassType, _className: Name): ForbiddenWordsInfo {
-        return {names: forbiddenPropertyNames, includeGlobalForbidden: true};
+        return { names: forbiddenPropertyNames, includeGlobalForbidden: true };
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return {names: forbiddenForEnumCases, includeGlobalForbidden: true};
+        return { names: forbiddenForEnumCases, includeGlobalForbidden: true };
     }
 
     protected makeNamedTypeNamer(): Namer {
@@ -344,7 +344,7 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
         );
     }
 
-    protected objcType(t: Type, nullableOrBoxed: boolean = false): [Sourcelike, string] {
+    protected objcType(t: Type, nullableOrBoxed = false): [Sourcelike, string] {
         return matchType<[Sourcelike, string]>(
             t,
             _anyType => ["id", ""],
@@ -546,13 +546,13 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
         return [name, " *_Nullable ", name, "FromJSON(NSString *json, NSStringEncoding encoding, NSError **error)"];
     }
 
-    private topLevelToDataPrototype(name: Name, pad: boolean = false): Sourcelike {
+    private topLevelToDataPrototype(name: Name, pad = false): Sourcelike {
         const parameter = this.variableNameForTopLevel(name);
         const padding = pad ? repeatString(" ", this.sourcelikeToString(name).length - "NSData".length) : "";
         return ["NSData", padding, " *_Nullable ", name, "ToData(", name, " *", parameter, ", NSError **error)"];
     }
 
-    private topLevelToJSONPrototype(name: Name, pad: boolean = false): Sourcelike {
+    private topLevelToJSONPrototype(name: Name, pad = false): Sourcelike {
         const parameter = this.variableNameForTopLevel(name);
         const padding = pad ? repeatString(" ", this.sourcelikeToString(name).length - "NSString".length) : "";
         return [
@@ -825,7 +825,7 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
     protected variableNameForTopLevel(name: Name): Sourcelike {
         const camelCaseName = modifySource(serialized => {
             // 1. remove class prefix
-            serialized = serialized.substr(this._classPrefix.length);
+            serialized = serialized.slice(this._classPrefix.length);
             // 2. camel case
             return camelCase(serialized);
         }, name);
@@ -975,7 +975,12 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
             }
 
             this.emitMark("Object interfaces");
-            this.forEachNamedType("leading-and-interposing", (c: ClassType, className: Name) => this.emitClassInterface(c, className), () => null, () => null);
+            this.forEachNamedType(
+                "leading-and-interposing",
+                (c: ClassType, className: Name) => this.emitClassInterface(c, className),
+                () => null,
+                () => null
+            );
 
             this.ensureBlankLine();
             this.emitLine("NS_ASSUME_NONNULL_END");
@@ -1034,7 +1039,12 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
                 this.forEachTopLevel("leading-and-interposing", (t, n) => this.emitTopLevelFunctions(t, n));
             }
 
-            this.forEachNamedType("leading-and-interposing", (c: ClassType, className: Name) => this.emitClassImplementation(c, className), () => null, () => null);
+            this.forEachNamedType(
+                "leading-and-interposing",
+                (c: ClassType, className: Name) => this.emitClassImplementation(c, className),
+                () => null,
+                () => null
+            );
 
             if (!this._options.justTypes) {
                 this.ensureBlankLine();
@@ -1044,7 +1054,6 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
             this.finishFile();
         }
     }
-
     private get needsMap(): boolean {
         // TODO this isn't complete (needs union support, for example)
         function needsMap(t: Type): boolean {
@@ -1054,7 +1063,6 @@ export class ObjectiveCRenderer extends ConvenienceRenderer {
                 (t instanceof ClassType && mapSome(t.getProperties(), p => needsMap(p.type)))
             );
         }
-
         return iterableSome(this.typeGraph.allTypesUnordered(), needsMap);
     }
 

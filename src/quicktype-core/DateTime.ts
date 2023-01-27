@@ -30,9 +30,7 @@ const TIME = /^(\d\d):(\d\d):(\d\d)(\.\d+)?(z|[+-]\d\d:\d\d)?$/i;
 
 export interface DateTimeRecognizer {
     isDate(s: string): boolean;
-
     isTime(s: string): boolean;
-
     isDateTime(s: string): boolean;
 }
 

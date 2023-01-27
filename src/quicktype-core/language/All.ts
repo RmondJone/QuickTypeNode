@@ -1,29 +1,30 @@
-import {iterableFind} from "collection-utils";
+import { iterableFind } from "collection-utils";
 
-import {TargetLanguage} from "../TargetLanguage";
+import { TargetLanguage } from "../TargetLanguage";
 
-import {NewtonsoftCSharpTargetLanguage} from "./CSharp";
-import {GoTargetLanguage} from "./Golang";
-import {CPlusPlusTargetLanguage} from "./CPlusPlus";
-import {ObjectiveCTargetLanguage} from "./Objective-C";
-import {JavaTargetLanguage} from "./Java";
-import {JavaScriptTargetLanguage} from "./JavaScript";
-import {JavaScriptPropTypesTargetLanguage} from "./JavaScriptPropTypes";
-import {FlowTargetLanguage, TypeScriptTargetLanguage} from "./TypeScriptFlow";
-import {SwiftTargetLanguage} from "./Swift";
-import {KotlinTargetLanguage} from "./Kotlin";
-import {ElmTargetLanguage} from "./Elm";
-import {JSONSchemaTargetLanguage} from "./JSONSchema";
-import {RustTargetLanguage} from "./Rust";
-import {CrystalTargetLanguage} from "./Crystal";
-import {RubyTargetLanguage} from "./ruby";
-import {DartTargetLanguage} from "./Dart";
-import {PythonTargetLanguage} from "./Python";
-import {PikeTargetLanguage} from "./Pike";
-import {HaskellTargetLanguage} from "./Haskell";
+import { CSharpTargetLanguage } from "./CSharp";
+import { GoTargetLanguage } from "./Golang";
+import { CPlusPlusTargetLanguage } from "./CPlusPlus";
+import { ObjectiveCTargetLanguage } from "./Objective-C";
+import { JavaTargetLanguage } from "./Java";
+import { JavaScriptTargetLanguage } from "./JavaScript";
+import { JavaScriptPropTypesTargetLanguage } from "./JavaScriptPropTypes";
+import { TypeScriptTargetLanguage, FlowTargetLanguage } from "./TypeScriptFlow";
+import { SwiftTargetLanguage } from "./Swift";
+import { KotlinTargetLanguage } from "./Kotlin";
+import { ElmTargetLanguage } from "./Elm";
+import { JSONSchemaTargetLanguage } from "./JSONSchema";
+import { RustTargetLanguage } from "./Rust";
+import { CrystalTargetLanguage } from "./Crystal";
+import { RubyTargetLanguage } from "./ruby";
+import { DartTargetLanguage } from "./Dart";
+import { PythonTargetLanguage } from "./Python";
+import { PikeTargetLanguage } from "./Pike";
+import { HaskellTargetLanguage } from "./Haskell";
+import { PhpTargetLanguage } from "./Php";
 
 export const all: TargetLanguage[] = [
-    new NewtonsoftCSharpTargetLanguage(),
+    new CSharpTargetLanguage(),
     new GoTargetLanguage(),
     new RustTargetLanguage(),
     new CrystalTargetLanguage(),
@@ -43,6 +44,7 @@ export const all: TargetLanguage[] = [
     new PythonTargetLanguage("Python", ["python", "py"], "py"),
     new PikeTargetLanguage(),
     new HaskellTargetLanguage(),
+    new PhpTargetLanguage()
 ];
 
 export function languageNamed(name: string, targetLanguages?: TargetLanguage[]): TargetLanguage | undefined {

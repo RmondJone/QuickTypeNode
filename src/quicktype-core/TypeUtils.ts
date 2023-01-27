@@ -1,21 +1,26 @@
-import {EqualityMap, iterableFirst, setFilter, setSortBy, setUnion} from "collection-utils";
+import { setFilter, setSortBy, iterableFirst, setUnion, EqualityMap } from "collection-utils";
 
-import {assert, assertNever, defined, panic} from "./support/Support";
-import {CombinationKind, combineTypeAttributes, emptyTypeAttributes, TypeAttributes} from "./attributes/TypeAttributes";
+import { defined, panic, assert, assertNever } from "./support/Support";
 import {
-    ArrayType,
-    ClassProperty,
-    ClassType,
-    EnumType,
-    isPrimitiveStringTypeKind,
-    MapType,
-    ObjectType,
-    PrimitiveType,
-    SetOperationType,
+    TypeAttributes,
+    combineTypeAttributes,
+    emptyTypeAttributes,
+    CombinationKind
+} from "./attributes/TypeAttributes";
+import {
     Type,
-    UnionType
+    PrimitiveType,
+    ArrayType,
+    EnumType,
+    ObjectType,
+    MapType,
+    ClassType,
+    ClassProperty,
+    SetOperationType,
+    UnionType,
+    isPrimitiveStringTypeKind
 } from "./Type";
-import {StringTypes, stringTypesTypeAttributeKind} from "./attributes/StringTypes";
+import { stringTypesTypeAttributeKind, StringTypes } from "./attributes/StringTypes";
 
 export function assertIsObject(t: Type): ObjectType {
     if (t instanceof ObjectType) {
@@ -105,7 +110,10 @@ export function makeGroupsToFlatten<T extends SetOperationType>(
 }
 
 export function combineTypeAttributesOfTypes(combinationKind: CombinationKind, types: Iterable<Type>): TypeAttributes {
-    return combineTypeAttributes(combinationKind, Array.from(types).map(t => t.getAttributes()));
+    return combineTypeAttributes(
+        combinationKind,
+        Array.from(types).map(t => t.getAttributes())
+    );
 }
 
 export function isAnyOrNull(t: Type): boolean {
@@ -174,11 +182,14 @@ export type SeparatedNamedTypes = {
 };
 
 export function separateNamedTypes(types: Iterable<Type>): SeparatedNamedTypes {
-    const objects = (setFilter(types, t => t.kind === "object" || t.kind === "class") as Set<ObjectType>) as ReadonlySet<ObjectType>;
-    const enums = (setFilter(types, t => t instanceof EnumType) as Set<EnumType>) as ReadonlySet<EnumType>;
-    const unions = (setFilter(types, t => t instanceof UnionType) as Set<UnionType>) as ReadonlySet<UnionType>;
+    const objects = setFilter(
+        types,
+        t => t.kind === "object" || t.kind === "class"
+    ) as Set<ObjectType> as ReadonlySet<ObjectType>;
+    const enums = setFilter(types, t => t instanceof EnumType) as Set<EnumType> as ReadonlySet<EnumType>;
+    const unions = setFilter(types, t => t instanceof UnionType) as Set<UnionType> as ReadonlySet<UnionType>;
 
-    return {objects, enums, unions};
+    return { objects, enums, unions };
 }
 
 export function directlyReachableTypes<T>(t: Type, setForType: (t: Type) => ReadonlySet<T> | null): ReadonlySet<T> {

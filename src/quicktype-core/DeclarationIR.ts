@@ -1,10 +1,10 @@
-import {iterableFirst, setFilter, setIntersect, setSubtract, setUnionInto} from "collection-utils";
+import { setUnionInto, setFilter, iterableFirst, setSubtract, setIntersect } from "collection-utils";
 
-import {TypeGraph} from "./TypeGraph";
-import {Type} from "./Type";
-import {assert, defined, panic} from "./support/Support";
-import {Graph} from "./Graph";
-import {messageError} from "./Messages";
+import { TypeGraph } from "./TypeGraph";
+import { Type } from "./Type";
+import { panic, defined, assert } from "./support/Support";
+import { Graph } from "./Graph";
+import { messageError } from "./Messages";
 
 export type DeclarationKind = "forward" | "define";
 
@@ -72,7 +72,7 @@ export function cycleBreakerTypesForGraph(
         visitedTypes.add(t);
     }
 
-    for (; ;) {
+    for (;;) {
         const maybeType = queue.pop();
         if (maybeType === undefined) break;
         const path: Type[] = [];
@@ -110,7 +110,6 @@ export function declarationsForGraph(
 
     function processGraph(graph: Graph<Type>, _writeComponents: boolean): void {
         const componentsGraph = graph.stronglyConnectedComponents();
-
         function visitComponent(component: ReadonlySet<Type>): void {
             if (visitedComponents.has(component)) return;
             visitedComponents.add(component);
@@ -122,7 +121,7 @@ export function declarationsForGraph(
             // 1. Only one node in the cycle needs a declaration, in which
             // case it's the breaker, and no forward declaration is necessary.
             if (declarationNeeded.size === 1) {
-                declarations.push({kind: "define", type: defined(iterableFirst(declarationNeeded))});
+                declarations.push({ kind: "define", type: defined(iterableFirst(declarationNeeded)) });
                 return;
             }
 
@@ -137,7 +136,7 @@ export function declarationsForGraph(
             // declaration, so we can pick any one. This is not a forward
             // declaration, either.
             if (declarationNeeded.size === 0) {
-                declarations.push({kind: "define", type: defined(iterableFirst(component))});
+                declarations.push({ kind: "define", type: defined(iterableFirst(component)) });
                 return;
             }
 
@@ -146,7 +145,7 @@ export function declarationsForGraph(
             // with it.
             if (canBeForwardDeclared === undefined) {
                 for (const t of declarationNeeded) {
-                    declarations.push({kind: "define", type: t});
+                    declarations.push({ kind: "define", type: t });
                 }
                 return;
             }
@@ -162,14 +161,14 @@ export function declarationsForGraph(
                 return messageError("IRNoForwardDeclarableTypeInCycle", {});
             }
             for (const t of forwardDeclarable) {
-                declarations.push({kind: "forward", type: t});
+                declarations.push({ kind: "forward", type: t });
             }
             setUnionInto(forwardedTypes, forwardDeclarable);
             const rest = setSubtract(component, forwardDeclarable);
             const restGraph = new Graph(rest, true, t => setIntersect(childrenOfType(t), rest));
             processGraph(restGraph, false);
             for (const t of forwardDeclarable) {
-                declarations.push({kind: "define", type: t});
+                declarations.push({ kind: "define", type: t });
             }
             return;
         }

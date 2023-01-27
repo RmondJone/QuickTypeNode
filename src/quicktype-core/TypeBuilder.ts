@@ -1,52 +1,52 @@
 import {
-    areEqual,
-    definedMap,
     EqualityMap,
+    mapMap,
+    mapSortByKey,
     iterableEvery,
     mapFilter,
     mapFind,
-    mapMap,
-    mapSortByKey,
+    areEqual,
     setUnionManyInto,
+    definedMap,
     withDefault
 } from "collection-utils";
 
 import {
-    ArrayType,
-    arrayTypeIdentity,
-    ClassProperty,
-    ClassType,
-    classTypeIdentity,
-    EnumType,
-    enumTypeIdentity,
-    IntersectionType,
-    intersectionTypeIdentity,
-    isPrimitiveStringTypeKind,
-    MapType,
-    mapTypeIdentify,
-    MaybeTypeIdentity,
-    ObjectType,
-    PrimitiveStringTypeKind,
-    PrimitiveType,
-    primitiveTypeIdentity,
     PrimitiveTypeKind,
-    TransformedStringTypeKind,
-    transformedStringTypeKinds,
     Type,
-    TypeIdentity,
-    TypeKind,
+    PrimitiveType,
+    EnumType,
+    MapType,
+    ArrayType,
+    ClassType,
     UnionType,
-    unionTypeIdentity
+    PrimitiveStringTypeKind,
+    ClassProperty,
+    IntersectionType,
+    ObjectType,
+    primitiveTypeIdentity,
+    enumTypeIdentity,
+    mapTypeIdentify,
+    arrayTypeIdentity,
+    classTypeIdentity,
+    unionTypeIdentity,
+    intersectionTypeIdentity,
+    MaybeTypeIdentity,
+    TypeIdentity,
+    TransformedStringTypeKind,
+    isPrimitiveStringTypeKind,
+    transformedStringTypeKinds,
+    TypeKind
 } from "./Type";
-import {assertTypeRefGraph, derefTypeRef, makeTypeRef, TypeGraph, TypeRef, typeRefIndex} from "./TypeGraph";
+import { TypeGraph, TypeRef, makeTypeRef, derefTypeRef, typeRefIndex, assertTypeRefGraph } from "./TypeGraph";
 import {
+    TypeAttributes,
     combineTypeAttributes,
-    emptyTypeAttributes,
     TypeAttributeKind,
-    TypeAttributes
+    emptyTypeAttributes
 } from "./attributes/TypeAttributes";
-import {assert, defined, panic} from "./support/Support";
-import {StringTypes, stringTypesTypeAttributeKind} from "./attributes/StringTypes";
+import { defined, assert, panic } from "./support/Support";
+import { stringTypesTypeAttributeKind, StringTypes } from "./attributes/StringTypes";
 
 // FIXME: Don't infer provenance.  All original types should be present in
 // non-inferred form in the final graph.
@@ -105,7 +105,7 @@ export class TypeBuilder {
     protected readonly types: (Type | undefined)[] = [];
     private readonly typeAttributes: TypeAttributes[] = [];
 
-    private _addedForwardingIntersection: boolean = false;
+    private _addedForwardingIntersection = false;
 
     constructor(
         typeGraphSerial: number,
@@ -281,7 +281,10 @@ export class TypeBuilder {
                 // we found the type based on its identity, i.e. all the identity
                 // attributes must be in there already, and we have a check that
                 // asserts that no identity attributes are added later.
-                this.addAttributes(result, mapFilter(attributes, (_, k) => !k.inIdentity));
+                this.addAttributes(
+                    result,
+                    mapFilter(attributes, (_, k) => !k.inIdentity)
+                );
             }
             return result;
         }

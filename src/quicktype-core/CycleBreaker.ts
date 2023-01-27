@@ -1,4 +1,4 @@
-import {assert, panic} from "./support/Support";
+import { assert, panic } from "./support/Support";
 
 export function breakCycles<T>(outEdges: number[][], chooseBreaker: (cycle: number[]) => [number, T]): [number, T][] {
     const numNodes = outEdges.length;
@@ -47,7 +47,7 @@ export function breakCycles<T>(outEdges: number[][], chooseBreaker: (cycle: numb
         done[node] = true;
     }
 
-    for (; ;) {
+    for (;;) {
         const i = workList.pop();
         if (i !== undefined) {
             if (done[i] || (inDegree[i] === 0 && outDegree[i] === 0)) {
@@ -68,7 +68,7 @@ export function breakCycles<T>(outEdges: number[][], chooseBreaker: (cycle: numb
 
         // There's a cycle
         const path: number[] = [n];
-        for (; ;) {
+        for (;;) {
             // FIXME: We look an arbitrary node that's still in the graph and follow it
             // until we see a cycle.  This cycle might not be the first cycle the needs to
             // be broken.  For example, imagine two cycles that are connected via an edge,

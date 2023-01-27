@@ -1,5 +1,4 @@
-export class AnnotationData {
-}
+export class AnnotationData {}
 
 export class IssueAnnotationData extends AnnotationData {
     constructor(readonly message: string) {

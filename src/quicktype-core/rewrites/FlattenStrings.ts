@@ -1,12 +1,12 @@
-import {iterableFirst} from "collection-utils";
+import { iterableFirst } from "collection-utils";
 
-import {PrimitiveType, Type, UnionType} from "../Type";
-import {combineTypeAttributesOfTypes, stringTypesForType} from "../TypeUtils";
-import {TypeGraph, TypeRef} from "../TypeGraph";
-import {StringTypeMapping} from "../TypeBuilder";
-import {GraphRewriteBuilder} from "../GraphRewriting";
-import {assert, defined} from "../support/Support";
-import {combineTypeAttributes} from "../attributes/TypeAttributes";
+import { PrimitiveType, UnionType, Type } from "../Type";
+import { stringTypesForType, combineTypeAttributesOfTypes } from "../TypeUtils";
+import { TypeGraph, TypeRef } from "../TypeGraph";
+import { StringTypeMapping } from "../TypeBuilder";
+import { GraphRewriteBuilder } from "../GraphRewriting";
+import { assert, defined } from "../support/Support";
+import { combineTypeAttributes } from "../attributes/TypeAttributes";
 
 // A union needs replacing if it contains more than one string type, one of them being
 // a basic string type.

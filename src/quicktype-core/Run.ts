@@ -1,24 +1,24 @@
-import {mapFirst} from "collection-utils";
+import { mapFirst } from "collection-utils";
 
 import * as targetLanguages from "./language/All";
-import {MultiFileRenderResult, TargetLanguage} from "./TargetLanguage";
-import {Annotation, Location, SerializedRenderResult, Span} from "./Source";
-import {assert} from "./support/Support";
-import {combineClasses} from "./rewrites/CombineClasses";
-import {inferMaps} from "./rewrites/InferMaps";
-import {StringTypeMapping, TypeBuilder} from "./TypeBuilder";
-import {noneToAny, optionalToNullable, removeIndirectionIntersections, TypeGraph} from "./TypeGraph";
-import {initTypeNames} from "./attributes/TypeNames";
-import {gatherNames} from "./GatherNames";
-import {expandStrings} from "./rewrites/ExpandStrings";
-import {flattenUnions} from "./rewrites/FlattenUnions";
-import {resolveIntersections} from "./rewrites/ResolveIntersections";
-import {replaceObjectType} from "./rewrites/ReplaceObjectType";
-import {messageError} from "./Messages";
-import {InputData} from "./input/Inputs";
-import {flattenStrings} from "./rewrites/FlattenStrings";
-import {makeTransformations} from "./MakeTransformations";
-import {TransformedStringTypeKind} from "./Type";
+import { TargetLanguage, MultiFileRenderResult } from "./TargetLanguage";
+import { SerializedRenderResult, Annotation, Location, Span } from "./Source";
+import { assert } from "./support/Support";
+import { combineClasses } from "./rewrites/CombineClasses";
+import { inferMaps } from "./rewrites/InferMaps";
+import { TypeBuilder, StringTypeMapping } from "./TypeBuilder";
+import { TypeGraph, noneToAny, optionalToNullable, removeIndirectionIntersections } from "./TypeGraph";
+import { initTypeNames } from "./attributes/TypeNames";
+import { gatherNames } from "./GatherNames";
+import { expandStrings } from "./rewrites/ExpandStrings";
+import { flattenUnions } from "./rewrites/FlattenUnions";
+import { resolveIntersections } from "./rewrites/ResolveIntersections";
+import { replaceObjectType } from "./rewrites/ReplaceObjectType";
+import { messageError } from "./Messages";
+import { InputData } from "./input/Inputs";
+import { flattenStrings } from "./rewrites/FlattenStrings";
+import { makeTransformations } from "./MakeTransformations";
+import { TransformedStringTypeKind } from "./Type";
 
 export function getTargetLanguage(nameOrInstance: string | TargetLanguage): TargetLanguage {
     if (typeof nameOrInstance === "object") {
@@ -28,7 +28,7 @@ export function getTargetLanguage(nameOrInstance: string | TargetLanguage): Targ
     if (language !== undefined) {
         return language;
     }
-    return messageError("DriverUnknownOutputLanguage", {lang: nameOrInstance});
+    return messageError("DriverUnknownOutputLanguage", { lang: nameOrInstance });
 }
 
 export type RendererOptions = { [name: string]: string };
@@ -197,7 +197,6 @@ export interface RunContext {
     debugPrintSchemaResolving: boolean;
 
     timeSync<T>(name: string, f: () => Promise<T>): Promise<T>;
-
     time<T>(name: string, f: () => T): T;
 }
 
@@ -290,7 +289,7 @@ class Run implements RunContext {
             false
         );
 
-        return {targetLanguage, stringTypeMapping, conflateNumbers, typeBuilder};
+        return { targetLanguage, stringTypeMapping, conflateNumbers, typeBuilder };
     }
 
     private async makeGraph(allInputs: InputData): Promise<TypeGraph> {
@@ -328,7 +327,7 @@ class Run implements RunContext {
     }
 
     private processGraph(allInputs: InputData, graphInputs: GraphInputs): TypeGraph {
-        const {targetLanguage, stringTypeMapping, conflateNumbers, typeBuilder} = graphInputs;
+        const { targetLanguage, stringTypeMapping, conflateNumbers, typeBuilder } = graphInputs;
 
         let graph = typeBuilder.finish();
         if (this._options.debugPrintGraph) {
@@ -429,7 +428,7 @@ class Run implements RunContext {
         }
 
         if (this._options.inferMaps) {
-            for (; ;) {
+            for (;;) {
                 const newGraph = this.time("infer maps", () =>
                     inferMaps(graph, stringTypeMapping, true, debugPrintReconstitution)
                 );
@@ -513,7 +512,7 @@ class Run implements RunContext {
     }
 
     private makeSimpleTextResult(lines: string[]): MultiFileRenderResult {
-        return new Map([[this._options.outputFilename, {lines, annotations: []}]] as [
+        return new Map([[this._options.outputFilename, { lines, annotations: [] }]] as [
             string,
             SerializedRenderResult
         ][]);
@@ -531,7 +530,7 @@ class Run implements RunContext {
         if (schemaString !== undefined) {
             const lines = JSON.stringify(JSON.parse(schemaString), undefined, 4).split("\n");
             lines.push("");
-            const srr = {lines, annotations: []};
+            const srr = { lines, annotations: [] };
             return new Map([[this._options.outputFilename, srr] as [string, SerializedRenderResult]]);
         }
 
@@ -595,11 +594,11 @@ export function quicktypeMultiFileSync(options: Partial<Options>): MultiFileRend
 }
 
 function offsetLocation(loc: Location, lineOffset: number): Location {
-    return {line: loc.line + lineOffset, column: loc.column};
+    return { line: loc.line + lineOffset, column: loc.column };
 }
 
 function offsetSpan(span: Span, lineOffset: number): Span {
-    return {start: offsetLocation(span.start, lineOffset), end: offsetLocation(span.end, lineOffset)};
+    return { start: offsetLocation(span.start, lineOffset), end: offsetLocation(span.end, lineOffset) };
 }
 
 /**
@@ -611,7 +610,7 @@ export function combineRenderResults(result: MultiFileRenderResult): SerializedR
     if (result.size <= 1) {
         const first = mapFirst(result);
         if (first === undefined) {
-            return {lines: [], annotations: []};
+            return { lines: [], annotations: [] };
         }
         return first;
     }
@@ -621,10 +620,10 @@ export function combineRenderResults(result: MultiFileRenderResult): SerializedR
         const offset = lines.length + 2;
         lines = lines.concat([`// ${filename}`, ""], srr.lines);
         annotations = annotations.concat(
-            srr.annotations.map(ann => ({annotation: ann.annotation, span: offsetSpan(ann.span, offset)}))
+            srr.annotations.map(ann => ({ annotation: ann.annotation, span: offsetSpan(ann.span, offset) }))
         );
     }
-    return {lines, annotations};
+    return { lines, annotations };
 }
 
 /**

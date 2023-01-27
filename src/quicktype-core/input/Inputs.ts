@@ -1,15 +1,15 @@
-import {arrayMapSync, iterableFind, iterableFirst, iterableSome, setFilterMap, withDefault} from "collection-utils";
+import { iterableFirst, iterableFind, iterableSome, setFilterMap, withDefault, arrayMapSync } from "collection-utils";
 
-import {CompressedJSON, CompressedJSONFromString, Value} from "./CompressedJSON";
-import {defined, errorMessage, panic} from "../support/Support";
-import {messageError} from "../Messages";
-import {TypeBuilder} from "../TypeBuilder";
-import {makeNamesTypeAttributes} from "../attributes/TypeNames";
-import {descriptionTypeAttributeKind} from "../attributes/Description";
-import {TypeInference} from "./Inference";
-import {TargetLanguage} from "../TargetLanguage";
-import {RunContext} from "../Run";
-import {languageNamed} from "../language/All";
+import { Value, CompressedJSON, CompressedJSONFromString } from "./CompressedJSON";
+import { panic, errorMessage, defined } from "../support/Support";
+import { messageError } from "../Messages";
+import { TypeBuilder } from "../TypeBuilder";
+import { makeNamesTypeAttributes } from "../attributes/TypeNames";
+import { descriptionTypeAttributeKind } from "../attributes/Description";
+import { TypeInference } from "./Inference";
+import { TargetLanguage } from "../TargetLanguage";
+import { RunContext } from "../Run";
+import { languageNamed } from "../language/All";
 
 export interface Input<T> {
     readonly kind: string;
@@ -17,7 +17,6 @@ export interface Input<T> {
     readonly needSchemaProcessing: boolean;
 
     addSource(source: T): Promise<void>;
-
     addSourceSync(source: T): void;
 
     singleStringSchemaSource(): string | undefined;
@@ -29,7 +28,6 @@ export interface Input<T> {
         inferEnums: boolean,
         fixedTopLevels: boolean
     ): Promise<void>;
-
     addTypesSync(
         ctx: RunContext,
         typeBuilder: TypeBuilder,
@@ -63,13 +61,12 @@ export class JSONInput<T> implements Input<JSONSourceData<T>> {
     private readonly _topLevels: Map<string, JSONTopLevel> = new Map();
 
     /* tslint:disable:no-unused-variable */
-    constructor(private readonly _compressedJSON: CompressedJSON<T>) {
-    }
+    constructor(private readonly _compressedJSON: CompressedJSON<T>) {}
 
     private addSample(topLevelName: string, sample: Value): void {
         let topLevel = this._topLevels.get(topLevelName);
         if (topLevel === undefined) {
-            topLevel = {samples: [], description: undefined};
+            topLevel = { samples: [], description: undefined };
             this._topLevels.set(topLevelName, topLevel);
         }
         topLevel.samples.push(sample);
@@ -93,7 +90,7 @@ export class JSONInput<T> implements Input<JSONSourceData<T>> {
     }
 
     async addSource(source: JSONSourceData<T>): Promise<void> {
-        const {name, samples, description} = source;
+        const { name, samples, description } = source;
         try {
             const values = await arrayMapSync(samples, async s => await this._compressedJSON.parse(s));
             this.addSamples(name, values, description);
@@ -103,7 +100,7 @@ export class JSONInput<T> implements Input<JSONSourceData<T>> {
     }
 
     addSourceSync(source: JSONSourceData<T>): void {
-        const {name, samples, description} = source;
+        const { name, samples, description } = source;
         try {
             const values = samples.map(s => this._compressedJSON.parseSync(s));
             this.addSamples(name, values, description);
@@ -135,7 +132,7 @@ export class JSONInput<T> implements Input<JSONSourceData<T>> {
     ): void {
         const inference = new TypeInference(this._compressedJSON, typeBuilder, inferMaps, inferEnums);
 
-        for (const [name, {samples, description}] of this._topLevels) {
+        for (const [name, { samples, description }] of this._topLevels) {
             const tref = inference.inferTopLevelType(makeNamesTypeAttributes(name, false), samples, fixedTopLevels);
             typeBuilder.addTopLevel(name, tref);
             if (description !== undefined) {
@@ -149,7 +146,7 @@ export class JSONInput<T> implements Input<JSONSourceData<T>> {
 export function jsonInputForTargetLanguage(
     targetLanguage: string | TargetLanguage,
     languages?: TargetLanguage[],
-    handleJSONRefs: boolean = false
+    handleJSONRefs = false
 ): JSONInput<string> {
     if (typeof targetLanguage === "string") {
         targetLanguage = defined(languageNamed(targetLanguage, languages));

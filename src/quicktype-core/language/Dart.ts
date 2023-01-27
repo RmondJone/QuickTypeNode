@@ -7,12 +7,13 @@ import {
     Type,
     UnionType
 } from "../Type";
-import {directlyReachableSingleNamedType, matchType, nullableFromUnion} from "../TypeUtils";
-import {maybeAnnotated, modifySource, Sourcelike} from "../Source";
+import { directlyReachableSingleNamedType, matchType, nullableFromUnion } from "../TypeUtils";
+import { maybeAnnotated, modifySource, Sourcelike } from "../Source";
 import {
     allLowerWordStyle,
     allUpperWordStyle,
     combineWords,
+    decapitalize,
     escapeNonPrintableMapper,
     firstUpperWordStyle,
     isAscii,
@@ -26,16 +27,16 @@ import {
     utf16LegalizeCharacters
 } from "../support/Strings";
 
-import {StringTypeMapping} from "../TypeBuilder";
+import { StringTypeMapping } from "../TypeBuilder";
 
-import {DependencyName, funPrefixNamer, Name, Namer} from "../Naming";
-import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
-import {TargetLanguage} from "../TargetLanguage";
-import {BooleanOption, getOptionValues, Option, OptionValues, StringOption} from "../RendererOptions";
-import {anyTypeIssueAnnotation, nullTypeIssueAnnotation} from "../Annotation";
-import {defined} from "../support/Support";
-import {RenderContext} from "../Renderer";
-import {arrayIntercalate} from "collection-utils";
+import { DependencyName, funPrefixNamer, Name, Namer } from "../Naming";
+import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
+import { TargetLanguage } from "../TargetLanguage";
+import { BooleanOption, getOptionValues, Option, OptionValues, StringOption } from "../RendererOptions";
+import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
+import { defined } from "../support/Support";
+import { RenderContext } from "../Renderer";
+import { arrayIntercalate } from "collection-utils";
 
 export const dartOptions = {
     nullSafety: new BooleanOption("null-safety", "Null Safety", true),
@@ -234,7 +235,7 @@ export class DartRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_c: ClassType, _className: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected makeNamedTypeNamer(): Namer {
@@ -283,7 +284,7 @@ export class DartRenderer extends ConvenienceRenderer {
             name.order,
             lookup => `${lookup(name)}_${this.fromJson}`
         );
-        this._topLevelDependents.set(name, {encoder, decoder});
+        this._topLevelDependents.set(name, { encoder, decoder });
         return [encoder, decoder];
     }
 
@@ -319,13 +320,18 @@ export class DartRenderer extends ConvenienceRenderer {
     }
 
     protected emitFileHeader(): void {
-        this.emitLine("///YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
-
         if (this.leadingComments !== undefined) {
             this.emitCommentLines(this.leadingComments);
         }
 
         if (this._options.justTypes) return;
+
+        this.emitLine("// To parse this JSON data, do");
+        this.emitLine("//");
+        this.forEachTopLevel("none", (_t, name) => {
+            const { decoder } = defined(this._topLevelDependents.get(name));
+            this.emitLine("//     final ", modifySource(decapitalize, name), " = ", decoder, "(jsonString);");
+        });
 
         this.ensureBlankLine();
         if (this._options.requiredProperties) {
@@ -730,7 +736,7 @@ export class DartRenderer extends ConvenienceRenderer {
 
         if (!this._options.justTypes && !this._options.codersInClass) {
             this.forEachTopLevel("leading-and-interposing", (t, name) => {
-                const {encoder, decoder} = defined(this._topLevelDependents.get(name));
+                const { encoder, decoder } = defined(this._topLevelDependents.get(name));
 
                 this.emitLine(
                     this.dartType(t),

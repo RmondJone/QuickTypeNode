@@ -1,13 +1,13 @@
-import {iterableFirst, setUnionInto} from "collection-utils";
+import { iterableFirst, setUnionInto } from "collection-utils";
 
-import {ClassProperty, ObjectType, Type, UnionType} from "./Type";
-import {assertIsObject} from "./TypeUtils";
-import {TypeBuilder} from "./TypeBuilder";
-import {BaseGraphRewriteBuilder, GraphRewriteBuilder, TypeLookerUp} from "./GraphRewriting";
-import {TypeRefUnionAccumulator, UnionBuilder} from "./UnionBuilder";
-import {assert, defined, panic} from "./support/Support";
-import {combineTypeAttributes, emptyTypeAttributes, TypeAttributes} from "./attributes/TypeAttributes";
-import {derefTypeRef, TypeRef} from "./TypeGraph";
+import { Type, ClassProperty, UnionType, ObjectType } from "./Type";
+import { assertIsObject } from "./TypeUtils";
+import { TypeBuilder } from "./TypeBuilder";
+import { TypeLookerUp, GraphRewriteBuilder, BaseGraphRewriteBuilder } from "./GraphRewriting";
+import { UnionBuilder, TypeRefUnionAccumulator } from "./UnionBuilder";
+import { panic, assert, defined } from "./support/Support";
+import { TypeAttributes, combineTypeAttributes, emptyTypeAttributes } from "./attributes/TypeAttributes";
+import { TypeRef, derefTypeRef } from "./TypeGraph";
 
 function getCliqueProperties(
     clique: ObjectType[],
@@ -63,9 +63,11 @@ function getCliqueProperties(
     return [unifiedProperties, unifiedAdditionalProperties, lostTypeAttributes];
 }
 
-function countProperties(
-    clique: ObjectType[]
-): { hasProperties: boolean; hasAdditionalProperties: boolean; hasNonAnyAdditionalProperties: boolean } {
+function countProperties(clique: ObjectType[]): {
+    hasProperties: boolean;
+    hasAdditionalProperties: boolean;
+    hasNonAnyAdditionalProperties: boolean;
+} {
     let hasProperties = false;
     let hasAdditionalProperties = false;
     let hasNonAnyAdditionalProperties = false;
@@ -81,7 +83,7 @@ function countProperties(
             }
         }
     }
-    return {hasProperties, hasAdditionalProperties, hasNonAnyAdditionalProperties};
+    return { hasProperties, hasAdditionalProperties, hasNonAnyAdditionalProperties };
 }
 
 export class UnifyUnionBuilder extends UnionBuilder<BaseGraphRewriteBuilder, TypeRef[], TypeRef[]> {
@@ -114,12 +116,15 @@ export class UnifyUnionBuilder extends UnionBuilder<BaseGraphRewriteBuilder, Typ
         }
 
         const objectTypes = objectRefs.map(r => assertIsObject(derefTypeRef(r, this.typeBuilder)));
-        const {hasProperties, hasAdditionalProperties, hasNonAnyAdditionalProperties} = countProperties(objectTypes);
+        const { hasProperties, hasAdditionalProperties, hasNonAnyAdditionalProperties } = countProperties(objectTypes);
 
         if (!this._makeObjectTypes && (hasNonAnyAdditionalProperties || (!hasProperties && hasAdditionalProperties))) {
             const propertyTypes = new Set<TypeRef>();
             for (const o of objectTypes) {
-                setUnionInto(propertyTypes, Array.from(o.getProperties().values()).map(cp => cp.typeRef));
+                setUnionInto(
+                    propertyTypes,
+                    Array.from(o.getProperties().values()).map(cp => cp.typeRef)
+                );
             }
             const additionalPropertyTypes = new Set(
                 objectTypes

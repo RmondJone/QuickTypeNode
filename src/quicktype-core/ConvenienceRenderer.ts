@@ -1,29 +1,29 @@
 import {
+    setUnion,
+    setFilter,
     iterableEnumerate,
     iterableSome,
     mapFilter,
-    mapFilterMap,
-    mapSome,
     mapSortBy,
-    setFilter,
-    setUnion
+    mapFilterMap,
+    mapSome
 } from "collection-utils";
 
-import {ClassProperty, ClassType, EnumType, MapType, ObjectType, Type, TypeKind, UnionType} from "./Type";
-import {isNamedType, matchTypeExhaustive, nullableFromUnion, separateNamedTypes} from "./TypeUtils";
-import {DependencyName, FixedName, keywordNamespace, Name, Namer, Namespace, SimpleName} from "./Naming";
-import {BlankLineConfig, ForEachPosition, RenderContext, Renderer} from "./Renderer";
-import {assert, defined, nonNull, panic} from "./support/Support";
-import {trimEnd} from "./support/Strings";
-import {serializeRenderResult, Sourcelike, sourcelikeToSource} from "./Source";
+import { Type, ClassType, EnumType, UnionType, TypeKind, ClassProperty, MapType, ObjectType } from "./Type";
+import { separateNamedTypes, nullableFromUnion, matchTypeExhaustive, isNamedType } from "./TypeUtils";
+import { Namespace, Name, Namer, FixedName, SimpleName, DependencyName, keywordNamespace } from "./Naming";
+import { Renderer, BlankLineConfig, RenderContext, ForEachPosition } from "./Renderer";
+import { defined, panic, nonNull, assert } from "./support/Support";
+import { trimEnd } from "./support/Strings";
+import { Sourcelike, sourcelikeToSource, serializeRenderResult } from "./Source";
 
-import {cycleBreakerTypesForGraph, Declaration, DeclarationIR, declarationsForGraph} from "./DeclarationIR";
-import {TypeAttributeStoreView} from "./TypeGraph";
-import {TypeAttributeKind} from "./attributes/TypeAttributes";
-import {descriptionTypeAttributeKind, propertyDescriptionsTypeAttributeKind} from "./attributes/Description";
-import {enumCaseNames, getAccessorName, objectPropertyNames, unionMemberName} from "./attributes/AccessorNames";
-import {followTargetType, Transformation, transformationForType} from "./Transformers";
-import {TargetLanguage} from "./TargetLanguage";
+import { declarationsForGraph, DeclarationIR, cycleBreakerTypesForGraph, Declaration } from "./DeclarationIR";
+import { TypeAttributeStoreView } from "./TypeGraph";
+import { TypeAttributeKind } from "./attributes/TypeAttributes";
+import { descriptionTypeAttributeKind, propertyDescriptionsTypeAttributeKind } from "./attributes/Description";
+import { enumCaseNames, objectPropertyNames, unionMemberName, getAccessorName } from "./attributes/AccessorNames";
+import { transformationForType, followTargetType, Transformation } from "./Transformers";
+import { TargetLanguage } from "./TargetLanguage";
 
 const wordWrap: (s: string) => string = require("wordwrap")(90);
 
@@ -73,7 +73,7 @@ export abstract class ConvenienceRenderer extends Renderer {
     private _enumCaseNamer: Namer | null;
 
     private _declarationIR: DeclarationIR | undefined;
-    protected _namedTypes: ReadonlyArray<Type> | undefined;
+    private _namedTypes: ReadonlyArray<Type> | undefined;
     private _namedObjects: Set<ObjectType> | undefined;
     private _namedEnums: Set<EnumType> | undefined;
     private _namedUnions: Set<UnionType> | undefined;
@@ -114,15 +114,15 @@ export abstract class ConvenienceRenderer extends Renderer {
      * forbidden, too!
      */
     protected forbiddenForObjectProperties(_o: ObjectType, _className: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: false};
+        return { names: [], includeGlobalForbidden: false };
     }
 
     protected forbiddenForUnionMembers(_u: UnionType, _unionName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: false};
+        return { names: [], includeGlobalForbidden: false };
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: false};
+        return { names: [], includeGlobalForbidden: false };
     }
 
     protected makeTopLevelDependencyNames(_t: Type, _topLevelName: Name): DependencyName[] {
@@ -134,13 +134,9 @@ export abstract class ConvenienceRenderer extends Renderer {
     }
 
     protected abstract makeNamedTypeNamer(): Namer;
-
     protected abstract namerForObjectProperty(o: ObjectType, p: ClassProperty): Namer | null;
-
     protected abstract makeUnionMemberNamer(): Namer | null;
-
     protected abstract makeEnumCaseNamer(): Namer | null;
-
     protected abstract emitSourceStructure(givenOutputFilename: string): void;
 
     protected makeNameForTransformation(_xf: Transformation, _typeName: Name | undefined): Name | undefined {
@@ -216,7 +212,7 @@ export abstract class ConvenienceRenderer extends Renderer {
         this._globalForbiddenNamespace = keywordNamespace("forbidden", this.forbiddenNamesForGlobalNamespace());
         this._otherForbiddenNamespaces = new Map();
         this._globalNamespace = new Namespace("global", undefined, [this._globalForbiddenNamespace], []);
-        const {objects, enums, unions} = this.typeGraph.allNamedTypesSeparated();
+        const { objects, enums, unions } = this.typeGraph.allNamedTypesSeparated();
         const namedUnions = setFilter(unions, u => this.unionNeedsName(u));
         for (const [name, t] of this.topLevels) {
             this.nameStoreView.setForTopLevel(name, this.addNameForTopLevel(t, name));
@@ -350,7 +346,7 @@ export abstract class ConvenienceRenderer extends Renderer {
             forbiddenNamespaces = forbiddenNamespaces.add(namespace);
         }
 
-        return {forbiddenNames: new Set(forbiddenNames), forbiddenNamespaces};
+        return { forbiddenNames: new Set(forbiddenNames), forbiddenNamespaces };
     }
 
     protected makeNameForProperty(
@@ -388,7 +384,7 @@ export abstract class ConvenienceRenderer extends Renderer {
     }
 
     private addPropertyNames(o: ObjectType, className: Name): void {
-        const {forbiddenNames, forbiddenNamespaces} = this.processForbiddenWordsInfo(
+        const { forbiddenNames, forbiddenNamespaces } = this.processForbiddenWordsInfo(
             this.forbiddenForObjectProperties(o, className),
             "forbidden-for-properties"
         );
@@ -432,7 +428,7 @@ export abstract class ConvenienceRenderer extends Renderer {
         const memberNamer = this._unionMemberNamer;
         if (memberNamer === null) return;
 
-        const {forbiddenNames, forbiddenNamespaces} = this.processForbiddenWordsInfo(
+        const { forbiddenNames, forbiddenNamespaces } = this.processForbiddenWordsInfo(
             this.forbiddenForUnionMembers(u, unionName),
             "forbidden-for-union-members"
         );
@@ -469,7 +465,7 @@ export abstract class ConvenienceRenderer extends Renderer {
     private addEnumCaseNames(e: EnumType, enumName: Name): void {
         if (this._enumCaseNamer === null) return;
 
-        const {forbiddenNames, forbiddenNamespaces} = this.processForbiddenWordsInfo(
+        const { forbiddenNames, forbiddenNamespaces } = this.processForbiddenWordsInfo(
             this.forbiddenForEnumCases(e, enumName),
             "forbidden-for-enum-cases"
         );
@@ -888,7 +884,7 @@ export abstract class ConvenienceRenderer extends Renderer {
         const classTypes = setFilter(types, t => t instanceof ClassType) as Set<ClassType>;
         this._haveOptionalProperties = iterableSome(classTypes, c => mapSome(c.getProperties(), p => p.isOptional));
         this._namedTypes = this._declarationIR.declarations.filter(d => d.kind === "define").map(d => d.type);
-        const {objects, enums, unions} = separateNamedTypes(this._namedTypes);
+        const { objects, enums, unions } = separateNamedTypes(this._namedTypes);
         this._namedObjects = new Set(objects);
         this._namedEnums = new Set(enums);
         this._namedUnions = new Set(unions);
@@ -913,7 +909,7 @@ export abstract class ConvenienceRenderer extends Renderer {
             processed.add(process(t));
         }
 
-        for (; ;) {
+        for (;;) {
             const maybeType = queue.pop();
             if (maybeType === undefined) {
                 break;

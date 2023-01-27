@@ -1,14 +1,14 @@
-import {iterableSome, setFilter} from "collection-utils";
+import { setFilter, iterableSome } from "collection-utils";
 
-import {derefTypeRef, TypeGraph, TypeRef} from "../TypeGraph";
-import {IntersectionType, Type, UnionType} from "../Type";
-import {makeGroupsToFlatten} from "../TypeUtils";
-import {assert} from "../support/Support";
-import {StringTypeMapping} from "../TypeBuilder";
-import {GraphRewriteBuilder} from "../GraphRewriting";
-import {unifyTypes, UnifyUnionBuilder} from "../UnifyClasses";
-import {messageAssert} from "../Messages";
-import {emptyTypeAttributes} from "../attributes/TypeAttributes";
+import { TypeGraph, TypeRef, derefTypeRef } from "../TypeGraph";
+import { Type, UnionType, IntersectionType } from "../Type";
+import { makeGroupsToFlatten } from "../TypeUtils";
+import { assert } from "../support/Support";
+import { StringTypeMapping } from "../TypeBuilder";
+import { GraphRewriteBuilder } from "../GraphRewriting";
+import { unifyTypes, UnifyUnionBuilder } from "../UnifyClasses";
+import { messageAssert } from "../Messages";
+import { emptyTypeAttributes } from "../attributes/TypeAttributes";
 
 export function flattenUnions(
     graph: TypeGraph,

@@ -1,12 +1,12 @@
-import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {Option} from "../RendererOptions";
-import {RenderContext} from "../Renderer";
-import {MultiWord, multiWord, parenIfNeeded, singleWord, Sourcelike} from "../Source";
-import {TargetLanguage} from "../TargetLanguage";
-import {ArrayType, ClassType, EnumType, MapType, PrimitiveType, Type, UnionType} from "../Type";
-import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
-import {isLetterOrUnderscoreOrDigit, legalizeCharacters, makeNameStyle, stringEscape} from "../support/Strings";
+import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
+import { Name, Namer, funPrefixNamer } from "../Naming";
+import { Option } from "../RendererOptions";
+import { RenderContext } from "../Renderer";
+import { MultiWord, Sourcelike, multiWord, parenIfNeeded, singleWord } from "../Source";
+import { TargetLanguage } from "../TargetLanguage";
+import { Type, ClassType, EnumType, UnionType, ArrayType, MapType, PrimitiveType } from "../Type";
+import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
+import { legalizeCharacters, isLetterOrUnderscoreOrDigit, stringEscape, makeNameStyle } from "../support/Strings";
 
 export const pikeOptions = {};
 
@@ -74,7 +74,6 @@ export class PikeTargetLanguage extends TargetLanguage {
     constructor() {
         super("Pike", ["pike", "pikelang"], "pmod");
     }
-
     protected getOptions(): Option<any>[] {
         return [];
     }
@@ -114,7 +113,6 @@ export class PikeRenderer extends ConvenienceRenderer {
     protected makeEnumCaseNamer(): Namer {
         return enumNamingFunction;
     }
-
     protected makeNamedTypeNamer(): Namer {
         return namedTypeNamingFunction;
     }
@@ -132,15 +130,15 @@ export class PikeRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_c: ClassType, _className: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected forbiddenForUnionMembers(_u: UnionType, _unionName: Name): ForbiddenWordsInfo {
-        return {names: [], includeGlobalForbidden: true};
+        return { names: [], includeGlobalForbidden: true };
     }
 
     protected sourceFor(t: Type): MultiWord {
@@ -191,7 +189,10 @@ export class PikeRenderer extends ConvenienceRenderer {
         this.emitBlock([e.kind, " ", enumName], () => {
             let table: Sourcelike[][] = [];
             this.forEachEnumCase(e, "none", (name, jsonName) => {
-                table.push([[name, ' = "', stringEscape(jsonName), '", '], ['// json: "', jsonName, '"']]);
+                table.push([
+                    [name, ' = "', stringEscape(jsonName), '", '],
+                    ['// json: "', jsonName, '"']
+                ]);
             });
             this.emitTable(table);
         });
@@ -242,7 +243,11 @@ export class PikeRenderer extends ConvenienceRenderer {
         this.forEachClassProperty(c, "none", (name, jsonName, p) => {
             const pikeType = this.sourceFor(p.type).source;
 
-            table.push([[pikeType, " "], [name, "; "], ['// json: "', jsonName, '"']]);
+            table.push([
+                [pikeType, " "],
+                [name, "; "],
+                ['// json: "', jsonName, '"']
+            ]);
         });
         this.emitTable(table);
     }
@@ -277,10 +282,8 @@ export class PikeRenderer extends ConvenienceRenderer {
             if (t instanceof PrimitiveType) {
                 this.emitLine(["return json;"]);
             } else if (t instanceof ArrayType) {
-                if (t.items instanceof PrimitiveType)
-                    this.emitLine(["return json;"]);
-                else
-                    this.emitLine(["return map(json, ", this.sourceFor(t.items).source, "_from_JSON);"]);
+                if (t.items instanceof PrimitiveType) this.emitLine(["return json;"]);
+                else this.emitLine(["return map(json, ", this.sourceFor(t.items).source, "_from_JSON);"]);
             } else if (t instanceof MapType) {
                 const type = this.sourceFor(t.values).source;
                 this.emitLine(["mapping(string:", type, ") retval = ([]);"]);

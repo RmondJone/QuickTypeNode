@@ -163,14 +163,14 @@ export class Chance {
      *  @throws {RangeError} min cannot be greater than max
      */
     natural(options: { max: number }): number {
-        return this.integer({min: 0, max: options.max});
+        return this.integer({ min: 0, max: options.max });
     }
 
     pick<T>(arr: T[]): T {
         if (arr.length === 0) {
             throw new RangeError("Chance: Cannot pick() from an empty array");
         }
-        return arr[this.natural({max: arr.length - 1})];
+        return arr[this.natural({ max: arr.length - 1 })];
     }
 
     animal(): string {

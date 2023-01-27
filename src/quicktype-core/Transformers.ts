@@ -1,19 +1,19 @@
 import {
-    addHashCode,
+    setUnionInto,
     areEqual,
-    arraySortByInto,
-    definedMap,
-    definedMapWithDefault,
     hashCodeOf,
-    hashString,
-    setUnionInto
+    definedMap,
+    addHashCode,
+    definedMapWithDefault,
+    arraySortByInto,
+    hashString
 } from "collection-utils";
 
-import {EnumType, PrimitiveType, Type, TypeKind, UnionType} from "./Type";
-import {TypeAttributeKind} from "./attributes/TypeAttributes";
-import {assert, indentationString, panic} from "./support/Support";
-import {BaseGraphRewriteBuilder} from "./GraphRewriting";
-import {derefTypeRef, TypeGraph, TypeRef} from "./TypeGraph";
+import { UnionType, Type, EnumType, PrimitiveType, TypeKind } from "./Type";
+import { TypeAttributeKind } from "./attributes/TypeAttributes";
+import { panic, assert, indentationString } from "./support/Support";
+import { BaseGraphRewriteBuilder } from "./GraphRewriting";
+import { TypeRef, derefTypeRef, TypeGraph } from "./TypeGraph";
 
 function debugStringForType(t: Type): string {
     const target = followTargetType(t);
@@ -28,8 +28,7 @@ function getNumberOfNodes(xfer: Transformer | undefined): number {
 }
 
 export abstract class Transformer {
-    constructor(readonly kind: string, protected readonly graph: TypeGraph, readonly sourceTypeRef: TypeRef) {
-    }
+    constructor(readonly kind: string, protected readonly graph: TypeGraph, readonly sourceTypeRef: TypeRef) {}
 
     get sourceType(): Type {
         return derefTypeRef(this.sourceTypeRef, this.graph);
@@ -429,7 +428,6 @@ export class DecodingChoiceTransformer extends Transformer {
 
     get transformers(): ReadonlyArray<Transformer> {
         const transformers: Transformer[] = [];
-
         function add(xfer: Transformer | undefined) {
             if (xfer === undefined) return;
             transformers.push(xfer);
@@ -976,9 +974,7 @@ export class MinMaxValueTransformer extends ProducerTransformer {
     equals(other: any): boolean {
         if (!super.equals(other)) return false;
         return (
-            other instanceof MinMaxValueTransformer &&
-            this.minimum === other.minimum &&
-            this.maximum === other.maximum
+            other instanceof MinMaxValueTransformer && this.minimum === other.minimum && this.maximum === other.maximum
         );
     }
 }
@@ -988,8 +984,7 @@ export class Transformation {
         private readonly _graph: TypeGraph,
         private readonly _targetTypeRef: TypeRef,
         readonly transformer: Transformer
-    ) {
-    }
+    ) {}
 
     get sourceType(): Type {
         return this.transformer.sourceType;
@@ -1069,7 +1064,7 @@ export function transformationForType(t: Type): Transformation | undefined {
 }
 
 export function followTargetType(t: Type): Type {
-    for (; ;) {
+    for (;;) {
         const xf = transformationForType(t);
         if (xf === undefined) return t;
         t = xf.targetType;

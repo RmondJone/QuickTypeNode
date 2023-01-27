@@ -1,22 +1,22 @@
 import {
-    areEqual,
     iterableFirst,
-    iterableReduce,
-    iterableSome,
     mapFilter,
+    iterableSome,
+    iterableReduce,
+    setUnion,
     setIntersect,
     setIsSuperset,
-    setUnion
+    areEqual
 } from "collection-utils";
 
-import {PrimitiveType} from "../Type";
-import {stringTypesForType} from "../TypeUtils";
-import {TypeGraph, TypeRef} from "../TypeGraph";
-import {GraphRewriteBuilder} from "../GraphRewriting";
-import {assert, defined} from "../support/Support";
-import {emptyTypeAttributes} from "../attributes/TypeAttributes";
-import {StringTypes} from "../attributes/StringTypes";
-import {RunContext} from "../Run";
+import { PrimitiveType } from "../Type";
+import { stringTypesForType } from "../TypeUtils";
+import { TypeGraph, TypeRef } from "../TypeGraph";
+import { GraphRewriteBuilder } from "../GraphRewriting";
+import { assert, defined } from "../support/Support";
+import { emptyTypeAttributes } from "../attributes/TypeAttributes";
+import { StringTypes } from "../attributes/StringTypes";
+import { RunContext } from "../Run";
 
 const MIN_LENGTH_FOR_ENUM = 10;
 
@@ -30,7 +30,7 @@ type EnumInfo = {
     numValues: number;
 };
 
-function isOwnEnum({numValues, cases}: EnumInfo): boolean {
+function isOwnEnum({ numValues, cases }: EnumInfo): boolean {
     return numValues >= MIN_LENGTH_FOR_ENUM && cases.size < Math.sqrt(numValues);
 }
 
@@ -72,7 +72,7 @@ export function expandStrings(ctx: RunContext, graph: TypeGraph, inference: Enum
             if (!someCaseIsNotNumber) return undefined;
         }
 
-        return {cases: new Set(cases.keys()), numValues};
+        return { cases: new Set(cases.keys()), numValues };
     }
 
     const enumInfos = new Map<PrimitiveType, EnumInfo>();

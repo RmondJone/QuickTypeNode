@@ -1,20 +1,20 @@
 import {
-    addHashCode,
-    areEqual,
-    definedMap,
-    hashCodeOf,
-    iterableFirst,
     mapMap,
-    mapMergeWithInto,
+    iterableFirst,
     setIntersect,
+    hashCodeOf,
+    areEqual,
+    mapMergeWithInto,
+    definedMap,
+    addHashCode,
     setUnionInto
 } from "collection-utils";
 
-import {TypeAttributeKind} from "./TypeAttributes";
-import {assert, defined} from "../support/Support";
-import {StringTypeMapping, stringTypeMappingGet} from "../TypeBuilder";
-import {TransformedStringTypeKind} from "../Type";
-import {DateTimeRecognizer} from "../DateTime";
+import { TypeAttributeKind } from "./TypeAttributes";
+import { defined, assert } from "../support/Support";
+import { StringTypeMapping, stringTypeMappingGet } from "../TypeBuilder";
+import { TransformedStringTypeKind } from "../Type";
+import { DateTimeRecognizer } from "../DateTime";
 
 export class StringTypes {
     static readonly unrestricted: StringTypes = new StringTypes(undefined, new Set());

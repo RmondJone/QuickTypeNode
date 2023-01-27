@@ -1,20 +1,20 @@
-import {CompressedJSON, Tag, Value, valueTag} from "./CompressedJSON";
-import {assert, assertNever, defined, panic} from "../support/Support";
-import {TypeBuilder} from "../TypeBuilder";
-import {UnionAccumulator, UnionBuilder} from "../UnionBuilder";
+import { Value, Tag, valueTag, CompressedJSON } from "./CompressedJSON";
+import { assertNever, defined, panic, assert } from "../support/Support";
+import { TypeBuilder } from "../TypeBuilder";
+import { UnionBuilder, UnionAccumulator } from "../UnionBuilder";
 import {
-    ArrayType,
     ClassProperty,
+    transformedStringTypeTargetTypeKindsMap,
+    UnionType,
     ClassType,
     MapType,
-    transformedStringTypeTargetTypeKindsMap,
-    UnionType
+    ArrayType
 } from "../Type";
-import {emptyTypeAttributes, TypeAttributes} from "../attributes/TypeAttributes";
-import {inferTransformedStringTypeKindForString, StringTypes} from "../attributes/StringTypes";
-import {derefTypeRef, TypeRef} from "../TypeGraph";
-import {messageError} from "../Messages";
-import {nullableFromUnion} from "../TypeUtils";
+import { TypeAttributes, emptyTypeAttributes } from "../attributes/TypeAttributes";
+import { StringTypes, inferTransformedStringTypeKindForString } from "../attributes/StringTypes";
+import { TypeRef, derefTypeRef } from "../TypeGraph";
+import { messageError } from "../Messages";
+import { nullableFromUnion } from "../TypeUtils";
 
 // This should be the recursive type
 //   Value[] | NestedValueArray[]
@@ -85,8 +85,7 @@ export class TypeInference {
         private readonly _typeBuilder: TypeBuilder,
         private readonly _inferMaps: boolean,
         private readonly _inferEnums: boolean
-    ) {
-    }
+    ) {}
 
     addValuesToAccumulator(valueArray: NestedValueArray, accumulator: Accumulator): void {
         forEachValueInNestedValueArray(valueArray, value => {
@@ -166,7 +165,7 @@ export class TypeInference {
 
     private resolveRef(ref: string, topLevel: TypeRef): TypeRef {
         if (!ref.startsWith("#/")) {
-            return messageError("InferenceJSONReferenceNotRooted", {reference: ref});
+            return messageError("InferenceJSONReferenceNotRooted", { reference: ref });
         }
         const parts = ref.split("/").slice(1);
         const graph = this._typeBuilder.typeGraph;
@@ -177,25 +176,25 @@ export class TypeInference {
                 const nullable = nullableFromUnion(t);
                 if (nullable === null) {
                     // FIXME: handle unions
-                    return messageError("InferenceJSONReferenceToUnion", {reference: ref});
+                    return messageError("InferenceJSONReferenceToUnion", { reference: ref });
                 }
                 t = nullable;
             }
             if (t instanceof ClassType) {
                 const cp = t.getProperties().get(part);
                 if (cp === undefined) {
-                    return messageError("InferenceJSONReferenceWrongProperty", {reference: ref});
+                    return messageError("InferenceJSONReferenceWrongProperty", { reference: ref });
                 }
                 tref = cp.typeRef;
             } else if (t instanceof MapType) {
                 tref = t.values.typeRef;
             } else if (t instanceof ArrayType) {
                 if (part.match("^[0-9]+$") === null) {
-                    return messageError("InferenceJSONReferenceInvalidArrayIndex", {reference: ref});
+                    return messageError("InferenceJSONReferenceInvalidArrayIndex", { reference: ref });
                 }
                 tref = t.items.typeRef;
             } else {
-                return messageError("InferenceJSONReferenceWrongProperty", {reference: ref});
+                return messageError("InferenceJSONReferenceWrongProperty", { reference: ref });
             }
         }
         return tref;

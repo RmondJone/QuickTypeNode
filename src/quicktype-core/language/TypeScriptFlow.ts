@@ -1,26 +1,27 @@
-import {ArrayType, ClassType, EnumType, Type, UnionType} from "../Type";
-import {isNamedType, matchType, nullableFromUnion} from "../TypeUtils";
-import {camelCase, utf16StringEscape} from "../support/Strings";
+import { Type, ArrayType, UnionType, ClassType, EnumType } from "../Type";
+import { matchType, nullableFromUnion, isNamedType } from "../TypeUtils";
+import { utf16StringEscape, camelCase } from "../support/Strings";
 
-import {modifySource, MultiWord, multiWord, parenIfNeeded, singleWord, Sourcelike} from "../Source";
-import {funPrefixNamer, Name, Namer} from "../Naming";
-import {BooleanOption, getOptionValues, Option, OptionValues} from "../RendererOptions";
+import { Sourcelike, modifySource, MultiWord, singleWord, parenIfNeeded, multiWord } from "../Source";
+import { Name, Namer, funPrefixNamer } from "../Naming";
+import { BooleanOption, Option, OptionValues, getOptionValues } from "../RendererOptions";
 import {
     javaScriptOptions,
-    JavaScriptRenderer,
     JavaScriptTargetLanguage,
+    JavaScriptRenderer,
     JavaScriptTypeAnnotations,
     legalizeName
 } from "./JavaScript";
-import {defined, panic} from "../support/Support";
-import {TargetLanguage} from "../TargetLanguage";
-import {RenderContext} from "../Renderer";
-import {isES3IdentifierStart} from "./JavaScriptUnicodeMaps";
+import { defined, panic } from "../support/Support";
+import { TargetLanguage } from "../TargetLanguage";
+import { RenderContext } from "../Renderer";
+import { isES3IdentifierStart } from "./JavaScriptUnicodeMaps";
 
 export const tsFlowOptions = Object.assign({}, javaScriptOptions, {
     justTypes: new BooleanOption("just-types", "Interfaces only", false),
     nicePropertyNames: new BooleanOption("nice-property-names", "Transform property names to be JavaScripty", false),
-    declareUnions: new BooleanOption("explicit-unions", "Explicitly name unions", false)
+    declareUnions: new BooleanOption("explicit-unions", "Explicitly name unions", false),
+    preferUnions: new BooleanOption("prefer-unions", "Use union type instead of enum", false)
 });
 
 const tsFlowTypeAnnotations = {
@@ -42,7 +43,8 @@ export abstract class TypeScriptFlowBaseTargetLanguage extends JavaScriptTargetL
             tsFlowOptions.runtimeTypecheckIgnoreUnknownProperties,
             tsFlowOptions.acronymStyle,
             tsFlowOptions.converters,
-            tsFlowOptions.rawType
+            tsFlowOptions.rawType,
+            tsFlowOptions.preferUnions
         ];
     }
 
@@ -158,6 +160,11 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
                 [this.sourceFor(t).source, ";"]
             ];
         });
+
+        const additionalProperties = c.getAdditionalProperties();
+        if (additionalProperties) {
+            this.emitTable([["[property: string]", ": ", this.sourceFor(additionalProperties).source, ";"]]);
+        }
     }
 
     private emitClass(c: ClassType, className: Name) {
@@ -253,7 +260,7 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        return Object.assign({never: ": never"}, tsFlowTypeAnnotations);
+        return Object.assign({ never: ": never" }, tsFlowTypeAnnotations);
     }
 
     protected emitModuleExports(): void {
@@ -274,11 +281,24 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
 
     protected emitEnum(e: EnumType, enumName: Name): void {
         this.emitDescription(this.descriptionForType(e));
-        this.emitBlock(["export enum ", enumName, " "], "", () => {
-            this.forEachEnumCase(e, "none", (name, jsonName) => {
-                this.emitLine(name, ` = "${utf16StringEscape(jsonName)}",`);
+
+        if (this._tsFlowOptions.preferUnions) {
+            let items = "";
+            e.cases.forEach(item => {
+                if (items === "") {
+                    items += `"${utf16StringEscape(item)}"`;
+                    return;
+                }
+                items += ` | "${utf16StringEscape(item)}"`;
             });
-        });
+            this.emitLine("export type ", enumName, " = ", items, ";");
+        } else {
+            this.emitBlock(["export enum ", enumName, " "], "", () => {
+                this.forEachEnumCase(e, "none", (name, jsonName) => {
+                    this.emitLine(name, ` = "${utf16StringEscape(jsonName)}",`);
+                });
+            });
+        }
     }
 
     protected emitClassBlock(c: ClassType, className: Name): void {
@@ -304,7 +324,7 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        return Object.assign({never: ""}, tsFlowTypeAnnotations);
+        return Object.assign({ never: "" }, tsFlowTypeAnnotations);
     }
 
     protected emitEnum(e: EnumType, enumName: Name): void {

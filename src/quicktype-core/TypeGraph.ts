@@ -1,14 +1,14 @@
-import {iterableFirst, mapMap, mapSome, setFilter, setMap, setSubtract, setUnionManyInto} from "collection-utils";
+import { iterableFirst, setFilter, setUnionManyInto, setSubtract, mapMap, mapSome, setMap } from "collection-utils";
 
-import {ClassType, IntersectionType, Type, UnionType} from "./Type";
-import {combineTypeAttributesOfTypes, isNamedType, SeparatedNamedTypes, separateNamedTypes} from "./TypeUtils";
-import {assert, defined, mustNotHappen, panic} from "./support/Support";
-import {getNoStringTypeMapping, provenanceTypeAttributeKind, StringTypeMapping, TypeBuilder} from "./TypeBuilder";
-import {BaseGraphRewriteBuilder, GraphRemapBuilder, GraphRewriteBuilder} from "./GraphRewriting";
-import {namesTypeAttributeKind, TypeNames} from "./attributes/TypeNames";
-import {Graph} from "./Graph";
-import {emptyTypeAttributes, TypeAttributeKind, TypeAttributes} from "./attributes/TypeAttributes";
-import {messageError} from "./Messages";
+import { Type, ClassType, UnionType, IntersectionType } from "./Type";
+import { separateNamedTypes, SeparatedNamedTypes, isNamedType, combineTypeAttributesOfTypes } from "./TypeUtils";
+import { defined, assert, panic, mustNotHappen } from "./support/Support";
+import { TypeBuilder, StringTypeMapping, getNoStringTypeMapping, provenanceTypeAttributeKind } from "./TypeBuilder";
+import { GraphRewriteBuilder, GraphRemapBuilder, BaseGraphRewriteBuilder } from "./GraphRewriting";
+import { TypeNames, namesTypeAttributeKind } from "./attributes/TypeNames";
+import { Graph } from "./Graph";
+import { TypeAttributeKind, TypeAttributes, emptyTypeAttributes } from "./attributes/TypeAttributes";
+import { messageError } from "./Messages";
 
 export type TypeRef = number;
 
@@ -69,8 +69,7 @@ export function typeAndAttributesForTypeRef(
 export class TypeAttributeStore {
     private readonly _topLevelValues: Map<string, TypeAttributes> = new Map();
 
-    constructor(private readonly _typeGraph: TypeGraph, private _values: (TypeAttributes | undefined)[]) {
-    }
+    constructor(private readonly _typeGraph: TypeGraph, private _values: (TypeAttributes | undefined)[]) {}
 
     private getTypeIndex(t: Type): number {
         const tref = t.typeRef;
@@ -129,8 +128,7 @@ export class TypeAttributeStoreView<T> {
     constructor(
         private readonly _attributeStore: TypeAttributeStore,
         private readonly _definition: TypeAttributeKind<T>
-    ) {
-    }
+    ) {}
 
     set(t: Type, value: T): void {
         this._attributeStore.set(this._definition, t, value);
@@ -169,7 +167,7 @@ export class TypeGraph {
 
     private _parents: Set<Type>[] | undefined = undefined;
 
-    private _printOnRewrite: boolean = false;
+    private _printOnRewrite = false;
 
     constructor(
         typeBuilder: TypeBuilder,
@@ -269,9 +267,9 @@ export class TypeGraph {
         const sets = Array.from(this.allTypesUnordered()).map(t => {
             const maybeSet = view.tryGet(t);
             if (maybeSet !== undefined) return maybeSet;
-            return new Set();
+            return new Set<number>();
         });
-        const result = new Set();
+        const result = new Set<number>();
         setUnionManyInto(result, sets);
         return result;
     }
@@ -288,7 +286,7 @@ export class TypeGraph {
         if (oldProvenance.size !== newProvenance.size) {
             const difference = setSubtract(oldProvenance, newProvenance);
             const indexes = Array.from(difference);
-            return messageError("IRTypeAttributesNotPropagated", {count: difference.size, indexes});
+            return messageError("IRTypeAttributesNotPropagated", { count: difference.size, indexes });
         }
     }
 
@@ -311,7 +309,7 @@ export class TypeGraph {
         replacementGroups: T[][],
         debugPrintReconstitution: boolean,
         replacer: (typesToReplace: ReadonlySet<T>, builder: GraphRewriteBuilder<T>, forwardingRef: TypeRef) => TypeRef,
-        force: boolean = false
+        force = false
     ): TypeGraph {
         this.printRewrite(title);
 
@@ -346,7 +344,7 @@ export class TypeGraph {
         alphabetizeProperties: boolean,
         map: ReadonlyMap<Type, Type>,
         debugPrintRemapping: boolean,
-        force: boolean = false
+        force = false
     ): TypeGraph {
         this.printRewrite(title);
 
@@ -388,7 +386,7 @@ export class TypeGraph {
 
     rewriteFixedPoint(alphabetizeProperties: boolean, debugPrintReconstitution: boolean): TypeGraph {
         let graph: TypeGraph = this;
-        for (; ;) {
+        for (;;) {
             const newGraph = this.rewrite(
                 "fixed-point",
                 getNoStringTypeMapping(),
@@ -417,7 +415,7 @@ export class TypeGraph {
     getParentsOfType(t: Type): Set<Type> {
         assertTypeRefGraph(t.typeRef, this);
         if (this._parents === undefined) {
-            const parents = defined(this._types).map(_ => new Set());
+            const parents = defined(this._types).map(_ => new Set<Type>());
             for (const p of this.allTypesUnordered()) {
                 for (const c of p.getChildren()) {
                     const index = c.index;
@@ -502,7 +500,7 @@ export function optionalToNullable(
                 );
                 ref = builder.getUnionType(attributes, members);
             }
-            return builder.makeClassProperty(ref, false);
+            return builder.makeClassProperty(ref, p.isOptional);
         });
         if (c.isFixed) {
             return builder.getUniqueClassType(c.getAttributes(), true, properties, forwardingRef);

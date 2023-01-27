@@ -1,40 +1,40 @@
-import {arraySortByInto, iterableFirst, iterableSome, mapMapEntries, setFilter, withDefault} from "collection-utils";
+import { setFilter, iterableFirst, mapMapEntries, withDefault, iterableSome, arraySortByInto } from "collection-utils";
 
-import {TypeGraph, TypeRef, typeRefIndex} from "./TypeGraph";
-import {TargetLanguage} from "./TargetLanguage";
+import { TypeGraph, TypeRef, typeRefIndex } from "./TypeGraph";
+import { TargetLanguage } from "./TargetLanguage";
 import {
-    ArrayType,
+    UnionType,
+    TypeKind,
     EnumType,
+    Type,
+    ArrayType,
+    PrimitiveType,
     isNumberTypeKind,
     isPrimitiveStringTypeKind,
-    PrimitiveStringTypeKind,
-    PrimitiveType,
     targetTypeKindForTransformedStringTypeKind,
-    Type,
-    TypeKind,
-    UnionType
+    PrimitiveStringTypeKind
 } from "./Type";
-import {GraphRewriteBuilder} from "./GraphRewriting";
-import {assert, defined, panic} from "./support/Support";
+import { GraphRewriteBuilder } from "./GraphRewriting";
+import { defined, assert, panic } from "./support/Support";
 import {
-    ArrayDecodingTransformer,
-    ChoiceTransformer,
+    UnionInstantiationTransformer,
     DecodingChoiceTransformer,
-    DecodingTransformer,
-    MinMaxLengthCheckTransformer,
-    MinMaxValueTransformer,
-    ParseStringTransformer,
-    StringMatchTransformer,
-    StringProducerTransformer,
     Transformation,
     transformationTypeAttributeKind,
+    StringMatchTransformer,
+    StringProducerTransformer,
+    ChoiceTransformer,
     Transformer,
-    UnionInstantiationTransformer
+    DecodingTransformer,
+    ParseStringTransformer,
+    ArrayDecodingTransformer,
+    MinMaxLengthCheckTransformer,
+    MinMaxValueTransformer
 } from "./Transformers";
-import {combineTypeAttributes, emptyTypeAttributes, TypeAttributes} from "./attributes/TypeAttributes";
-import {StringTypes} from "./attributes/StringTypes";
-import {RunContext} from "./Run";
-import {minMaxLengthForType, minMaxValueForType} from "./attributes/Constraints";
+import { TypeAttributes, emptyTypeAttributes, combineTypeAttributes } from "./attributes/TypeAttributes";
+import { StringTypes } from "./attributes/StringTypes";
+import { RunContext } from "./Run";
+import { minMaxLengthForType, minMaxValueForType } from "./attributes/Constraints";
 
 function transformationAttributes(
     graph: TypeGraph,
@@ -132,7 +132,6 @@ function replaceUnion(
     }
 
     let maybeStringType: TypeRef | undefined = undefined;
-
     function getStringType(): TypeRef {
         if (maybeStringType === undefined) {
             maybeStringType = builder.getStringType(emptyTypeAttributes, StringTypes.unrestricted);
@@ -167,7 +166,11 @@ function replaceUnion(
         transformerForString = new DecodingTransformer(
             graph,
             getStringType(),
-            new ChoiceTransformer(graph, getStringType(), stringTypes.map(t => defined(transformerForStringType(t))))
+            new ChoiceTransformer(
+                graph,
+                getStringType(),
+                stringTypes.map(t => defined(transformerForStringType(t)))
+            )
         );
     }
 

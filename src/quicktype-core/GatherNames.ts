@@ -1,12 +1,12 @@
 import * as pluralize from "pluralize";
-import {setMap, setSortBy, setUnion} from "collection-utils";
+import { setUnion, setMap, setSortBy } from "collection-utils";
 
-import {TypeGraph} from "./TypeGraph";
-import {ObjectType, Type} from "./Type";
-import {matchCompoundType, nullableFromUnion} from "./TypeUtils";
-import {namesTypeAttributeKind, tooManyNamesThreshold, TooManyTypeNames, TypeNames} from "./attributes/TypeNames";
-import {assert, defined, panic} from "./support/Support";
-import {transformationForType} from "./Transformers";
+import { TypeGraph } from "./TypeGraph";
+import { Type, ObjectType } from "./Type";
+import { matchCompoundType, nullableFromUnion } from "./TypeUtils";
+import { TypeNames, namesTypeAttributeKind, TooManyTypeNames, tooManyNamesThreshold } from "./attributes/TypeNames";
+import { defined, panic, assert } from "./support/Support";
+import { transformationForType } from "./Transformers";
 
 class UniqueQueue<T> {
     private readonly _present = new Set<T>();
@@ -316,7 +316,10 @@ export function gatherNames(graph: TypeGraph, destructive: boolean, debugPrint: 
             alternatives = new Set();
         }
 
-        alternatives = setUnion(alternatives, setMap(names, name => `${name}_${t.kind}`));
+        alternatives = setUnion(
+            alternatives,
+            setMap(names, name => `${name}_${t.kind}`)
+        );
         directAlternativesForType.set(t, alternatives);
     }
 

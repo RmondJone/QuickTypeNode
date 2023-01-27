@@ -1,28 +1,27 @@
-import {EqualityMap, mapMap} from "collection-utils";
+import { mapMap, EqualityMap } from "collection-utils";
 
-import {ClassProperty, MaybeTypeIdentity, PrimitiveTypeKind, Type} from "./Type";
-import {combineTypeAttributesOfTypes} from "./TypeUtils";
+import { PrimitiveTypeKind, Type, ClassProperty, MaybeTypeIdentity } from "./Type";
+import { combineTypeAttributesOfTypes } from "./TypeUtils";
 import {
-    assertTypeRefGraph,
-    derefTypeRef,
-    isTypeRef,
-    typeAndAttributesForTypeRef,
     TypeGraph,
     TypeRef,
-    typeRefIndex
+    derefTypeRef,
+    typeAndAttributesForTypeRef,
+    assertTypeRefGraph,
+    typeRefIndex,
+    isTypeRef
 } from "./TypeGraph";
-import {combineTypeAttributes, emptyTypeAttributes, TypeAttributes} from "./attributes/TypeAttributes";
-import {assert, indentationString, panic} from "./support/Support";
-import {StringTypeMapping, TypeBuilder} from "./TypeBuilder";
+import { TypeAttributes, emptyTypeAttributes, combineTypeAttributes } from "./attributes/TypeAttributes";
+import { assert, panic, indentationString } from "./support/Support";
+import { TypeBuilder, StringTypeMapping } from "./TypeBuilder";
 
 export interface TypeLookerUp {
     lookupTypeRefs(typeRefs: TypeRef[], forwardingRef?: TypeRef): TypeRef | undefined;
-
     reconstituteTypeRef(typeRef: TypeRef, attributes?: TypeAttributes, forwardingRef?: TypeRef): TypeRef;
 }
 
 export class TypeReconstituter<TBuilder extends BaseGraphRewriteBuilder> {
-    private _wasUsed: boolean = false;
+    private _wasUsed = false;
     private _typeRef: TypeRef | undefined = undefined;
 
     constructor(
@@ -31,8 +30,7 @@ export class TypeReconstituter<TBuilder extends BaseGraphRewriteBuilder> {
         private readonly _typeAttributes: TypeAttributes,
         private readonly _forwardingRef: TypeRef | undefined,
         private readonly _register: (tref: TypeRef) => void
-    ) {
-    }
+    ) {}
 
     private builderForNewType(): TBuilder {
         assert(!this._wasUsed, "TypeReconstituter used more than once");
@@ -211,7 +209,7 @@ export class TypeReconstituter<TBuilder extends BaseGraphRewriteBuilder> {
 export abstract class BaseGraphRewriteBuilder extends TypeBuilder implements TypeLookerUp {
     protected readonly reconstitutedTypes: Map<number, TypeRef> = new Map();
 
-    private _lostTypeAttributes: boolean = false;
+    private _lostTypeAttributes = false;
     private _printIndent = 0;
 
     constructor(
@@ -250,7 +248,6 @@ export abstract class BaseGraphRewriteBuilder extends TypeBuilder implements Typ
     }
 
     abstract lookupTypeRefs(typeRefs: TypeRef[], forwardingRef?: TypeRef, replaceSet?: boolean): TypeRef | undefined;
-
     protected abstract forceReconstituteTypeRef(
         originalRef: TypeRef,
         attributes?: TypeAttributes,
@@ -561,7 +558,7 @@ export class GraphRewriteBuilder<T extends Type> extends BaseGraphRewriteBuilder
 
     // If the union of these type refs have been, or are supposed to be, reconstituted to
     // one target type, return it.  Otherwise return undefined.
-    lookupTypeRefs(typeRefs: TypeRef[], forwardingRef?: TypeRef, replaceSet: boolean = true): TypeRef | undefined {
+    lookupTypeRefs(typeRefs: TypeRef[], forwardingRef?: TypeRef, replaceSet = true): TypeRef | undefined {
         this.assertTypeRefsToReconstitute(typeRefs, forwardingRef);
 
         // Check whether we have already reconstituted them.  That means ensuring

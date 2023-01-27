@@ -1,11 +1,11 @@
-import {iterableEnumerate} from "collection-utils";
+import { iterableEnumerate } from "collection-utils";
 
-import {TypeGraph} from "./TypeGraph";
-import {assignNames, Name, Namespace} from "./Naming";
-import {annotated, newline, NewlineSource, Source, Sourcelike, sourcelikeToSource} from "./Source";
-import {AnnotationData, IssueAnnotationData} from "./Annotation";
-import {assert, panic} from "./support/Support";
-import {TargetLanguage} from "./TargetLanguage";
+import { TypeGraph } from "./TypeGraph";
+import { Name, Namespace, assignNames } from "./Naming";
+import { Source, Sourcelike, NewlineSource, annotated, sourcelikeToSource, newline } from "./Source";
+import { AnnotationData, IssueAnnotationData } from "./Annotation";
+import { assert, panic } from "./support/Support";
+import { TargetLanguage } from "./TargetLanguage";
 
 export type RenderResult = {
     sources: ReadonlyMap<string, Source>;
@@ -17,9 +17,9 @@ export type BlankLineConfig = BlankLinePosition | [BlankLinePosition, number];
 
 function getBlankLineConfig(cfg: BlankLineConfig): { position: BlankLinePosition; count: number } {
     if (Array.isArray(cfg)) {
-        return {position: cfg[0], count: cfg[1]};
+        return { position: cfg[0], count: cfg[1] };
     }
-    return {position: cfg, count: 1};
+    return { position: cfg, count: 1 };
 }
 
 function lineIndentation(line: string): { indent: number; text: string | null } {
@@ -32,10 +32,10 @@ function lineIndentation(line: string): { indent: number; text: string | null } 
         } else if (c === "\t") {
             indent = (indent / 4 + 1) * 4;
         } else {
-            return {indent, text: line.substring(i)};
+            return { indent, text: line.substring(i) };
         }
     }
-    return {indent: 0, text: null};
+    return { indent: 0, text: null };
 }
 
 export type RenderContext = {
@@ -137,7 +137,7 @@ export abstract class Renderer {
         this._emitContext = new EmitContext();
     }
 
-    ensureBlankLine(numBlankLines: number = 1): void {
+    ensureBlankLine(numBlankLines = 1): void {
         this._emitContext.ensureBlankLine(numBlankLines);
     }
 
@@ -159,7 +159,7 @@ export abstract class Renderer {
     }
 
     emitLineOnce(...lineParts: Sourcelike[]): void {
-        let lineEmitted: boolean = true;
+        let lineEmitted = true;
         if (lineParts.length === 1) {
             lineEmitted = this.emitItemOnce(lineParts[0]);
         } else if (lineParts.length > 1) {
@@ -188,7 +188,7 @@ export abstract class Renderer {
         let currentIndent = 0;
         for (let i = 1; i < numLines; i++) {
             const line = lines[i];
-            const {indent, text} = lineIndentation(line);
+            const { indent, text } = lineIndentation(line);
             assert(indent % 4 === 0, "Indentation is not a multiple of 4.");
             if (text !== null) {
                 const newIndent = indent / 4;
@@ -233,7 +233,7 @@ export abstract class Renderer {
     protected emitTable = (tableArray: Sourcelike[][]): void => {
         if (tableArray.length === 0) return;
         const table = tableArray.map(r => r.map(sl => sourcelikeToSource(sl)));
-        this._emitContext.emitItem({kind: "table", table});
+        this._emitContext.emitItem({ kind: "table", table });
         this._emitContext.emitNewline();
     };
 
@@ -276,16 +276,12 @@ export abstract class Renderer {
         blankLineConfig: BlankLineConfig,
         emitter: (v: V, k: K, position: ForEachPosition) => void
     ): boolean {
-        const {position, count} = getBlankLineConfig(blankLineConfig);
+        const { position, count } = getBlankLineConfig(blankLineConfig);
         const interposing = ["interposing", "leading-and-interposing"].indexOf(position) >= 0;
         const leading = ["leading", "leading-and-interposing"].indexOf(position) >= 0;
         return this.forEach(iterable, interposing ? count : 0, leading ? count : 0, emitter);
     }
 
-    /**
-     * 缩进
-     * @param fn
-     */
     indent(fn: () => void): void {
         this.changeIndent(1);
         fn();
@@ -293,7 +289,6 @@ export abstract class Renderer {
     }
 
     protected abstract setUpNaming(): Iterable<Namespace>;
-
     protected abstract emitSource(givenOutputFilename: string): void;
 
     private assignNames(): ReadonlyMap<Name, string> {
@@ -330,7 +325,7 @@ export abstract class Renderer {
         if (!this._emitContext.isEmpty) {
             this.finishFile(givenOutputFilename);
         }
-        return {sources: this._finishedFiles, names: this._names};
+        return { sources: this._finishedFiles, names: this._names };
     }
 
     get names(): ReadonlyMap<Name, string> {
