@@ -48,6 +48,7 @@ import {
     iterableFirst
 } from "collection-utils";
 
+// @ts-ignore
 import unicode from "unicode-properties";
 
 const forbiddenTypeNames = [

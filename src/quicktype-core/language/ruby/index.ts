@@ -1,3 +1,4 @@
+// @ts-ignore
 import unicode from "unicode-properties";
 
 import { Sourcelike, modifySource } from "../../Source";

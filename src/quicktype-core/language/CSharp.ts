@@ -50,6 +50,7 @@ import {
 } from "../Transformers";
 import { RenderContext } from "../Renderer";
 import { minMaxLengthForType, minMaxValueForType } from "../attributes/Constraints";
+// @ts-ignore
 import unicode from "unicode-properties";
 
 export enum Framework {

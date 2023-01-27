@@ -455,32 +455,6 @@ export class SwiftRenderer extends ConvenienceRenderer {
         return null;
     }
 
-    private renderSingleFileHeaderComments(): void {
-        this.emitLineOnce("// This file was generated from JSON Schema using quicktype, do not modify it directly.");
-        this.emitLineOnce("// To parse the JSON, add this file to your project and do:");
-        this.emitLineOnce("//");
-        this.forEachTopLevel("none", (t, topLevelName) => {
-            if (this._options.convenienceInitializers && !(t instanceof EnumType)) {
-                this.emitLineOnce(
-                    "//   let ",
-                    modifySource(camelCase, topLevelName),
-                    " = try ",
-                    topLevelName,
-                    "(json)"
-                );
-            } else {
-                this.emitLineOnce(
-                    "//   let ",
-                    modifySource(camelCase, topLevelName),
-                    " = ",
-                    "try? JSONDecoder().decode(",
-                    topLevelName,
-                    ".self, from: jsonData)"
-                );
-            }
-        });
-    }
-
     private renderHeader(type: Type, name: Name): void {
         if (this.leadingComments !== undefined) {
             this.emitCommentLines(this.leadingComments);
@@ -1403,10 +1377,6 @@ encoder.dateEncodingStrategy = .formatted(formatter)`);
 
     protected emitSourceStructure(): void {
         this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
-
-        if (this._options.multiFileOutput === false) {
-            this.renderSingleFileHeaderComments();
-        }
 
         this.forEachNamedType(
             "leading-and-interposing",
