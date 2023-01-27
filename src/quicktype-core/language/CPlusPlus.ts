@@ -2614,6 +2614,7 @@ export class CPlusPlusRenderer extends ConvenienceRenderer {
     }
 
     protected emitSourceStructure(proposedFilename: string): void {
+        this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
         this._generatedFiles.clear();
 
         /** Gather all the unique/custom types used by the schema */

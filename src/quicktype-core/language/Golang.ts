@@ -545,6 +545,7 @@ func marshalUnion(pi *int64, pf *float64, pb *bool, ps *string, haveArray bool, 
     }
 
     protected emitSourceStructure(): void {
+        this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
         if (
             this._options.multiFileOutput === false &&
             this._options.justTypes === false &&

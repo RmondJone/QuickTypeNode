@@ -23,6 +23,7 @@ import { StringOption, BooleanOption, EnumOption, Option, getOptionValues, Optio
 import { assert, defined } from "../support/Support";
 import { RenderContext } from "../Renderer";
 
+// @ts-ignore
 import unicode from "unicode-properties";
 
 export type MemoryAttribute = "assign" | "strong" | "copy";

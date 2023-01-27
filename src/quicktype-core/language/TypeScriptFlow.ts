@@ -351,6 +351,7 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected emitSourceStructure() {
+        this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
         this.emitLine("// @flow");
         this.ensureBlankLine();
         super.emitSourceStructure();
