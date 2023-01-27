@@ -1,5 +1,5 @@
 #下载Node环境
-FROM node:10.12.0-alpine
+FROM node:18.13.0-alpine
 #作者信息
 MAINTAINER guohanlin
 #配置linux服务器需要的环境
