@@ -1,5 +1,3 @@
-import { mapFirst } from "collection-utils";
-
 import { TargetLanguage } from "../TargetLanguage";
 import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
 import {
@@ -22,7 +20,6 @@ import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils"
 import { Sourcelike, maybeAnnotated } from "../Source";
 import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
 import { BooleanOption, EnumOption, Option, getOptionValues, OptionValues } from "../RendererOptions";
-import { defined } from "../support/Support";
 import { RenderContext } from "../Renderer";
 
 export enum Density {
@@ -368,21 +365,8 @@ export class RustRenderer extends ConvenienceRenderer {
             this.emitCommentLines(this.leadingComments);
             return;
         }
-
-        const topLevelName = defined(mapFirst(this.topLevels)).getCombinedName();
         this.emitMultiline(
-            `// Example code that deserializes and serializes the model.
-// extern crate serde;
-// #[macro_use]
-// extern crate serde_derive;
-// extern crate serde_json;
-//
-// use generated_module::${topLevelName};
-//
-// fn main() {
-//     let json = r#"{"answer": 42}"#;
-//     let model: ${topLevelName} = serde_json::from_str(&json).unwrap();
-// }`
+            "// YApi QuickType插件生成，具体参考文档:https://plugins.jetbrains.com/plugin/18847-yapi-quicktype/documentation"
         );
     }
 

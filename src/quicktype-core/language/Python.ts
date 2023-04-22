@@ -1,5 +1,5 @@
-import { TargetLanguage } from "../TargetLanguage";
-import { StringTypeMapping } from "../TypeBuilder";
+import {TargetLanguage} from "../TargetLanguage";
+import {StringTypeMapping} from "../TypeBuilder";
 import {
     TransformedStringTypeKind,
     PrimitiveStringTypeKind,
@@ -9,10 +9,10 @@ import {
     UnionType,
     ClassProperty
 } from "../Type";
-import { RenderContext } from "../Renderer";
-import { Option, getOptionValues, OptionValues, EnumOption, BooleanOption } from "../RendererOptions";
-import { ConvenienceRenderer, ForbiddenWordsInfo, topLevelNameOrder } from "../ConvenienceRenderer";
-import { Namer, funPrefixNamer, Name, DependencyName } from "../Naming";
+import {RenderContext} from "../Renderer";
+import {Option, getOptionValues, OptionValues, EnumOption, BooleanOption} from "../RendererOptions";
+import {ConvenienceRenderer, ForbiddenWordsInfo, topLevelNameOrder} from "../ConvenienceRenderer";
+import {Namer, funPrefixNamer, Name, DependencyName} from "../Naming";
 import {
     splitIntoWords,
     combineWords,
@@ -23,9 +23,9 @@ import {
     stringEscape,
     originalWord
 } from "../support/Strings";
-import { assertNever, panic, defined } from "../support/Support";
-import { Sourcelike, MultiWord, multiWord, singleWord, parenIfNeeded } from "../Source";
-import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
+import {assertNever, panic, defined} from "../support/Support";
+import {Sourcelike, MultiWord, multiWord, singleWord, parenIfNeeded} from "../Source";
+import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
 import {
     followTargetType,
     transformationForType,
@@ -120,9 +120,9 @@ export const pythonOptions = {
         "python-version",
         "Python version",
         [
-            ["3.5", { typeHints: false, dataClasses: false }],
-            ["3.6", { typeHints: true, dataClasses: false }],
-            ["3.7", { typeHints: true, dataClasses: true }]
+            ["3.5", {typeHints: false, dataClasses: false}],
+            ["3.6", {typeHints: true, dataClasses: false}],
+            ["3.7", {typeHints: true, dataClasses: true}]
         ],
         "3.6"
     ),
@@ -131,6 +131,11 @@ export const pythonOptions = {
 };
 
 export class PythonTargetLanguage extends TargetLanguage {
+
+    constructor() {
+        super("Python", ["python", "py"], "py");
+    }
+
     protected getOptions(): Option<any>[] {
         return [pythonOptions.features, pythonOptions.justTypes, pythonOptions.nicePropertyNames];
     }
@@ -251,7 +256,7 @@ export class PythonRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_: ClassType, _classNamed: Name): ForbiddenWordsInfo {
-        return { names: forbiddenPropertyNames, includeGlobalForbidden: false };
+        return {names: forbiddenPropertyNames, includeGlobalForbidden: false};
     }
 
     protected makeNamedTypeNamer(): Namer {
@@ -496,9 +501,9 @@ export class PythonRenderer extends ConvenienceRenderer {
         const closingLines = this.gatherSource(() => this.emitClosingCode());
         const supportLines = this.gatherSource(() => this.emitSupportCode());
 
-        if (this.leadingComments !== undefined) {
-            this.emitCommentLines(this.leadingComments);
-        }
+        this.emitMultiline(
+            "# YApi QuickType插件生成，具体参考文档:https://plugins.jetbrains.com/plugin/18847-yapi-quicktype/documentation"
+        );
         this.ensureBlankLine();
         this.emitImports();
         this.ensureBlankLine(2);
@@ -554,14 +559,14 @@ function compose(input: ValueOrLambda, f: ValueOrLambda | ((arg: Sourcelike) => 
     if (typeof f === "function") {
         if (input.value !== undefined) {
             // `input` is a value, so just apply `f` to its source form.
-            return { value: f(makeValue(input)) };
+            return {value: f(makeValue(input))};
         }
         if (input.lambda !== undefined) {
             // `input` is a lambda, so build `lambda x: f(input(x))`.
-            return { lambda: multiWord(" ", "lambda x:", f([parenIfNeeded(input.lambda), "(x)"])), value: undefined };
+            return {lambda: multiWord(" ", "lambda x:", f([parenIfNeeded(input.lambda), "(x)"])), value: undefined};
         }
         // `input` is the identify function, so the composition is `lambda x: f(x)`.
-        return { lambda: multiWord(" ", "lambda x:", f("x")), value: undefined };
+        return {lambda: multiWord(" ", "lambda x:", f("x")), value: undefined};
     }
 
     if (f.value !== undefined) {
@@ -586,10 +591,10 @@ function compose(input: ValueOrLambda, f: ValueOrLambda | ((arg: Sourcelike) => 
     }
 
     // `input` is a value, so return `f(input)`.
-    return { lambda: f.lambda, value: makeValue(input) };
+    return {lambda: f.lambda, value: makeValue(input)};
 }
 
-const identity: ValueOrLambda = { value: undefined };
+const identity: ValueOrLambda = {value: undefined};
 
 // If `vol` is a lambda, return it in its source form.  If it's
 // a value, return a `lambda` that returns the value.
@@ -888,7 +893,7 @@ export class JSONPythonRenderer extends PythonRenderer {
 
     // Applies the converter function to `arg`
     protected convFn(cf: ConverterFunction, arg: ValueOrLambda): ValueOrLambda {
-        return compose(arg, { lambda: singleWord(this.conv(cf)), value: undefined });
+        return compose(arg, {lambda: singleWord(this.conv(cf)), value: undefined});
     }
 
     protected typeObject(t: Type): Sourcelike {
@@ -1046,7 +1051,7 @@ export class JSONPythonRenderer extends PythonRenderer {
                     v,
                     ")"
                 ]),
-            enumType => compose(value, { lambda: singleWord(this.nameForNamedType(enumType)), value: undefined }),
+            enumType => compose(value, {lambda: singleWord(this.nameForNamedType(enumType)), value: undefined}),
             unionType => {
                 // FIXME: handle via transformers
                 const deserializers = Array.from(unionType.members).map(
@@ -1147,7 +1152,7 @@ export class JSONPythonRenderer extends PythonRenderer {
                 const args: Sourcelike[] = [];
                 this.emitLine("assert isinstance(obj, dict)");
                 this.forEachClassProperty(t, "none", (name, jsonName, cp) => {
-                    const property = { value: ["obj.get(", this.string(jsonName), ")"] };
+                    const property = {value: ["obj.get(", this.string(jsonName), ")"]};
                     this.emitLine(name, " = ", makeValue(this.deserializer(property, cp.type)));
                     args.push(name);
                 });
@@ -1159,7 +1164,7 @@ export class JSONPythonRenderer extends PythonRenderer {
         this.emitBlock(["def to_dict(self)", this.typeHint(" -> dict"), ":"], () => {
             this.emitLine("result", this.typeHint(": dict"), " = {}");
             this.forEachClassProperty(t, "none", (name, jsonName, cp) => {
-                const property = { value: ["self.", name] };
+                const property = {value: ["self.", name]};
                 if (cp.isOptional) {
                     this.emitBlock(["if self.", name, " is not None:"], () => {
                         this.emitLine(
@@ -1213,7 +1218,7 @@ export class JSONPythonRenderer extends PythonRenderer {
             l => `${l(topLevelName)}_from_dict`
         );
         const toDict = new DependencyName(this._converterNamer, topLevelNameOrder, l => `${l(topLevelName)}_to_dict`);
-        this._topLevelConverterNames.set(topLevelName, { fromDict, toDict });
+        this._topLevelConverterNames.set(topLevelName, {fromDict, toDict});
         return [fromDict, toDict];
     }
 
@@ -1236,26 +1241,26 @@ export class JSONPythonRenderer extends PythonRenderer {
             ""
         ]);
         this.forEachTopLevel("none", (_, name) => {
-            const { fromDict } = defined(this._topLevelConverterNames.get(name));
+            const {fromDict} = defined(this._topLevelConverterNames.get(name));
             this.emitLine(this.commentLineStart, "    result = ", fromDict, "(json.loads(json_string))");
         });
     }
 
     protected emitClosingCode(): void {
         this.forEachTopLevel(["interposing", 2], (t, name) => {
-            const { fromDict, toDict } = defined(this._topLevelConverterNames.get(name));
+            const {fromDict, toDict} = defined(this._topLevelConverterNames.get(name));
             const pythonType = this.pythonType(t);
             this.emitBlock(
                 ["def ", fromDict, "(", this.typingDecl("s", "Any"), ")", this.typeHint(" -> ", pythonType), ":"],
                 () => {
-                    this.emitLine("return ", makeValue(this.deserializer({ value: "s" }, t)));
+                    this.emitLine("return ", makeValue(this.deserializer({value: "s"}, t)));
                 }
             );
             this.ensureBlankLine(2);
             this.emitBlock(
                 ["def ", toDict, "(x", this.typeHint(": ", pythonType), ")", this.typingReturn("Any"), ":"],
                 () => {
-                    this.emitLine("return ", makeValue(this.serializer({ value: "x" }, t)));
+                    this.emitLine("return ", makeValue(this.serializer({value: "x"}, t)));
                 }
             );
         });

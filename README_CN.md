@@ -1,5 +1,5 @@
 # 一、背景介绍
-本Node服务是集成了QuickType，对其二次开发的一个Node服务。主要为[YApiQuickType插件](https://github.com/RmondJone/YapiQuickType) 提供解析服务
+本Node服务是集成了QuickType，对其二次开发的一个Node服务。主要为[YApiQuickType插件](https://plugins.jetbrains.com/plugin/18847-yapi-quicktype/documentation) 提供解析服务
 
 修复了QuickType一些使用场景上的问题，如下几点：
 * Java类不能生成到一个文件中

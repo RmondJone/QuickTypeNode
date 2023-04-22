@@ -1,5 +1,5 @@
 import {
-    CPlusPlusTargetLanguage,
+    CPlusPlusTargetLanguage, CSharpTargetLanguage,
     DartTargetLanguage,
     FetchingJSONSchemaStore,
     GoTargetLanguage,
@@ -8,12 +8,13 @@ import {
     jsonInputForTargetLanguage,
     JSONSchemaInput,
     KotlinTargetLanguage,
-    ObjectiveCTargetLanguage,
-    quicktype,
+    ObjectiveCTargetLanguage, PythonTargetLanguage,
+    quicktype, RustTargetLanguage,
     SwiftTargetLanguage,
     TypeScriptTargetLanguage
 } from "../quicktype-core";
 import {AcronymStyleOptions} from "../quicktype-core/support/Acronyms";
+import {PhpTargetLanguage} from "../quicktype-core/language/Php";
 
 
 /**
@@ -140,6 +141,49 @@ function getTargetLanguageOptions(inputData, targetLanguage) {
                 lang: retTargetLanguage,
                 rendererOptions: {
                     'just-types': true
+                }
+            }
+            break
+        case "C#":
+            retTargetLanguage = new CSharpTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true,
+                    'array-type': 'list',
+                }
+            }
+            break
+        case "Rust":
+            retTargetLanguage = new RustTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true,
+                }
+            }
+            break
+        case "PHP":
+            retTargetLanguage = new PhpTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true,
+                }
+            }
+            break
+        case "Python":
+            retTargetLanguage = new PythonTargetLanguage()
+            retOptions = {
+                inputData: inputData,
+                lang: retTargetLanguage,
+                rendererOptions: {
+                    'just-types': true,
+                    'python-version': '3.6',
+                    'nice-property-names': false
                 }
             }
             break

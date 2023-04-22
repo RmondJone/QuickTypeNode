@@ -1,7 +1,7 @@
 # 1. Background introduction
 
 This Node service is a Node service that integrates QuickType for secondary development.Mainly provides parsing services
-for the [YApiQuickType plugin](https://github.com/RmondJone/YapiQuickType)
+for the [YApiQuickType plugin](https://plugins.jetbrains.com/plugin/18847-yapi-quicktype/documentation)
 
 Fixed some usage scenarios of QuickType, as follows:
 

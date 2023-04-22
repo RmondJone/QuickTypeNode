@@ -291,7 +291,7 @@ export class KotlinRenderer extends ConvenienceRenderer {
     }
 
     protected emitHeader(): void {
-        this.emitLine("//YApi QuickType插件生成，具体参考文档:https://github.com/RmondJone/YapiQuickType")
+        this.emitLine("// YApi QuickType插件生成，具体参考文档:https://plugins.jetbrains.com/plugin/18847-yapi-quicktype/documentation")
         if (this.leadingComments !== undefined) {
             this.emitCommentLines(this.leadingComments);
         } else {
