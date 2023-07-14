@@ -16,6 +16,8 @@ import {
 import {AcronymStyleOptions} from "../quicktype-core/support/Acronyms";
 import {PhpTargetLanguage} from "../quicktype-core/language/Php";
 
+let logger = require('../utils/logger')
+
 
 /**
  * 注释: 根据JSON字符串生成对应实体
@@ -36,8 +38,16 @@ export async function quickTypeByJSON(targetLanguage, typeName, jsonString) {
 
     const inputData = new InputData()
     inputData.addInput(jsonInput)
-    let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage))
-    return conversionResult(result, targetLanguage)
+    try {
+        let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage))
+        return conversionResult(result, targetLanguage)
+    } catch (e) {
+        logger.error(e)
+        return {
+            retCode: -1,
+            message: `转换类型异常：${e}`
+        }
+    }
 }
 
 /**
@@ -59,8 +69,16 @@ export async function quickTypeByJSONSchema(targetLanguage, typeName, jsonSchema
     const inputData = new InputData()
     inputData.addInput(schemaInput)
     //根据targetLanguage获得目标语言
-    let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage))
-    return conversionResult(result, targetLanguage)
+    try {
+        let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage))
+        return conversionResult(result, targetLanguage)
+    } catch (e) {
+        logger.error(e)
+        return {
+            retCode: -1,
+            message: `转换类型异常：${e}`
+        }
+    }
 }
 
 /**
@@ -75,9 +93,16 @@ function conversionResult(result, targetLanguage) {
         if ('Dart' === targetLanguage) {
             code = code.replace(/Map<String, dynamic>/g, 'Map<dynamic, dynamic>')
         }
-        return code
+        return {
+            retCode: 0,
+            message: '转换类型成功',
+            info: code
+        }
     }
-    return ''
+    return {
+        retCode: -1,
+        message: `转换类型异常：结果为空`,
+    }
 }
 
 /**

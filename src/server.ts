@@ -29,18 +29,8 @@ app.post('/api/quickType/conversion', async (req, res) => {
     let result
     if (conversionType === 'json') {
         result = await quickTypeByJSON(targetLanguage, className, jsonString)
-        result = {
-            retCode: 0,
-            message: '转换类型成功',
-            info: result
-        }
     } else if (conversionType === 'jsonSchema') {
         result = await quickTypeByJSONSchema(targetLanguage, className, jsonString)
-        result = {
-            retCode: 0,
-            message: '转换类型成功',
-            info: result
-        }
     } else {
         result = {
             retCode: -1,
