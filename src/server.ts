@@ -21,6 +21,7 @@ app.post('/api/quickType/conversion', async (req, res) => {
     let targetLanguage = req.body['targetLanguage']
     let className = req.body['className']
     let jsonString = req.body['jsonString']
+    let options = req.body["options"]
     logger.info('类型转换接口请求参数:\n',
         '\n入参类型:' + conversionType,
         '\n目标语言:' + targetLanguage,
@@ -28,9 +29,9 @@ app.post('/api/quickType/conversion', async (req, res) => {
         '\njson字符串:' + jsonString)
     let result
     if (conversionType === 'json') {
-        result = await quickTypeByJSON(targetLanguage, className, jsonString)
+        result = await quickTypeByJSON(targetLanguage, className, jsonString,options)
     } else if (conversionType === 'jsonSchema') {
-        result = await quickTypeByJSONSchema(targetLanguage, className, jsonString)
+        result = await quickTypeByJSONSchema(targetLanguage, className, jsonString,options)
     } else {
         result = {
             retCode: -1,

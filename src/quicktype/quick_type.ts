@@ -25,7 +25,7 @@ let logger = require('../utils/logger')
  * @author 郭翰林
  * @returns {Promise<SerializedRenderResult>}
  */
-export async function quickTypeByJSON(targetLanguage, typeName, jsonString) {
+export async function quickTypeByJSON(targetLanguage, typeName, jsonString, options) {
     const jsonInput = jsonInputForTargetLanguage(targetLanguage)
 
     // We could add multiple samples for the same desired
@@ -39,8 +39,8 @@ export async function quickTypeByJSON(targetLanguage, typeName, jsonString) {
     const inputData = new InputData()
     inputData.addInput(jsonInput)
     try {
-        let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage))
-        return conversionResult(result, targetLanguage)
+        let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage, options))
+        return conversionResult(result, targetLanguage,options)
     } catch (e) {
         logger.error(e)
         return {
@@ -59,7 +59,7 @@ export async function quickTypeByJSON(targetLanguage, typeName, jsonString) {
  * @param jsonSchemaString
  * @returns {Promise<string|string>}
  */
-export async function quickTypeByJSONSchema(targetLanguage, typeName, jsonSchemaString) {
+export async function quickTypeByJSONSchema(targetLanguage, typeName, jsonSchemaString, options) {
     const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore())
 
     // We could add multiple schemas for multiple types,
@@ -70,8 +70,8 @@ export async function quickTypeByJSONSchema(targetLanguage, typeName, jsonSchema
     inputData.addInput(schemaInput)
     //根据targetLanguage获得目标语言
     try {
-        let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage))
-        return conversionResult(result, targetLanguage)
+        let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage, options))
+        return conversionResult(result, targetLanguage, options)
     } catch (e) {
         logger.error(e)
         return {
@@ -87,11 +87,16 @@ export async function quickTypeByJSONSchema(targetLanguage, typeName, jsonSchema
  * @author 郭翰林
  * @param result
  */
-function conversionResult(result, targetLanguage) {
+function conversionResult(result, targetLanguage, options) {
     if (result.lines.length > 0) {
         let code = result.lines.join('\n')
+        let optionsMap = JSON.parse(options)
         if ('Dart' === targetLanguage) {
             code = code.replace(/Map<String, dynamic>/g, 'Map<dynamic, dynamic>')
+        } else if ("Java" === targetLanguage) {
+            if (optionsMap['lombok'] ?? false) {
+                code = code.replace(/@lombok./g, "@")
+            }
         }
         return {
             retCode: 0,
@@ -111,9 +116,10 @@ function conversionResult(result, targetLanguage) {
  * @author 郭翰林
  * @param targetLanguage
  */
-function getTargetLanguageOptions(inputData, targetLanguage) {
+function getTargetLanguageOptions(inputData, targetLanguage, options) {
     let retOptions
     let retTargetLanguage
+    let optionsMap = JSON.parse(options)
     switch (targetLanguage) {
         case 'Kotlin':
             retTargetLanguage = new KotlinTargetLanguage()
@@ -144,6 +150,7 @@ function getTargetLanguageOptions(inputData, targetLanguage) {
                 lang: retTargetLanguage,
                 rendererOptions: {
                     'just-types': true,
+                    "lombok": optionsMap['lombok'] ?? false,
                     'array-type': 'list',
                     'acronym-style': AcronymStyleOptions.Original
                 }
