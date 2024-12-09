@@ -40,7 +40,7 @@ export async function quickTypeByJSON(targetLanguage, typeName, jsonString, opti
     inputData.addInput(jsonInput)
     try {
         let result = await quicktype(getTargetLanguageOptions(inputData, targetLanguage, options))
-        return conversionResult(result, targetLanguage,options)
+        return conversionResult(result, targetLanguage, options)
     } catch (e) {
         logger.error(e)
         return {
@@ -90,7 +90,7 @@ export async function quickTypeByJSONSchema(targetLanguage, typeName, jsonSchema
 function conversionResult(result, targetLanguage, options) {
     if (result.lines.length > 0) {
         let code = result.lines.join('\n')
-        let optionsMap = JSON.parse(options)
+        let optionsMap = options ? JSON.parse(options) : {}
         if ('Dart' === targetLanguage) {
             code = code.replace(/Map<String, dynamic>/g, 'Map<dynamic, dynamic>')
         } else if ("Java" === targetLanguage) {
@@ -119,7 +119,7 @@ function conversionResult(result, targetLanguage, options) {
 function getTargetLanguageOptions(inputData, targetLanguage, options) {
     let retOptions
     let retTargetLanguage
-    let optionsMap = JSON.parse(options)
+    let optionsMap = options ? JSON.parse(options) : {}
     switch (targetLanguage) {
         case 'Kotlin':
             retTargetLanguage = new KotlinTargetLanguage()
