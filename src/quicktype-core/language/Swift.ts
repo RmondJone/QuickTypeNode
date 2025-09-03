@@ -1,7 +1,7 @@
-import { arrayIntercalate } from "collection-utils";
-import { assert, defined } from "../support/Support";
+import {arrayIntercalate} from "collection-utils";
+import {assert, defined} from "../support/Support";
 
-import { TargetLanguage } from "../TargetLanguage";
+import {TargetLanguage} from "../TargetLanguage";
 import {
     Type,
     ClassType,
@@ -14,12 +14,12 @@ import {
     TransformedStringTypeKind,
     PrimitiveStringTypeKind
 } from "../Type";
-import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
-import { Name, Namer, funPrefixNamer } from "../Naming";
-import { BooleanOption, EnumOption, Option, StringOption, OptionValues, getOptionValues } from "../RendererOptions";
-import { Sourcelike, maybeAnnotated, modifySource } from "../Source";
-import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
-import { ConvenienceRenderer, ForbiddenWordsInfo } from "../ConvenienceRenderer";
+import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
+import {Name, Namer, funPrefixNamer} from "../Naming";
+import {BooleanOption, EnumOption, Option, StringOption, OptionValues, getOptionValues} from "../RendererOptions";
+import {Sourcelike, maybeAnnotated, modifySource} from "../Source";
+import {anyTypeIssueAnnotation, nullTypeIssueAnnotation} from "../Annotation";
+import {ConvenienceRenderer, ForbiddenWordsInfo} from "../ConvenienceRenderer";
 import {
     legalizeCharacters,
     isLetterOrUnderscore,
@@ -37,11 +37,11 @@ import {
     camelCase,
     addPrefixIfNecessary
 } from "../support/Strings";
-import { RenderContext, ForEachPosition } from "../Renderer";
-import { StringTypeMapping } from "../TypeBuilder";
-import { panic } from "../support/Support";
-import { DefaultDateTimeRecognizer, DateTimeRecognizer } from "../DateTime";
-import { acronymOption, acronymStyle, AcronymStyleOptions } from "../support/Acronyms";
+import {RenderContext, ForEachPosition} from "../Renderer";
+import {StringTypeMapping} from "../TypeBuilder";
+import {panic} from "../support/Support";
+import {DefaultDateTimeRecognizer, DateTimeRecognizer} from "../DateTime";
+import {acronymOption, acronymStyle, AcronymStyleOptions} from "../support/Acronyms";
 
 const MAX_SAMELINE_PROPERTIES = 4;
 
@@ -55,6 +55,7 @@ export const swiftOptions = {
         ["struct", false],
         ["class", true]
     ]),
+    singleComments: new BooleanOption("single-comments", "Comment In A SingleLine", true),
     mutableProperties: new BooleanOption("mutable-properties", "Use var instead of let for object properties", false),
     acronymStyle: acronymOption(AcronymStyleOptions.Pascal),
     dense: new EnumOption(
@@ -94,9 +95,9 @@ export const swiftOptions = {
         "protocol",
         "Make types implement protocol",
         [
-            ["none", { equatable: false, hashable: false }],
-            ["equatable", { equatable: true, hashable: false }],
-            ["hashable", { equatable: false, hashable: true }]
+            ["none", {equatable: false, hashable: false}],
+            ["equatable", {equatable: true, hashable: false}],
+            ["hashable", {equatable: false, hashable: true}]
         ],
         "none",
         "secondary"
@@ -151,7 +152,8 @@ export class SwiftTargetLanguage extends TargetLanguage {
             swiftOptions.optionalEnums,
             swiftOptions.swift5Support,
             swiftOptions.multiFileOutput,
-            swiftOptions.mutableProperties
+            swiftOptions.mutableProperties,
+            swiftOptions.singleComments
         ];
     }
 
@@ -337,15 +339,15 @@ export class SwiftRenderer extends ConvenienceRenderer {
     }
 
     protected forbiddenForObjectProperties(_c: ClassType, _classNamed: Name): ForbiddenWordsInfo {
-        return { names: ["fromURL", "json"], includeGlobalForbidden: true };
+        return {names: ["fromURL", "json"], includeGlobalForbidden: true};
     }
 
     protected forbiddenForEnumCases(_e: EnumType, _enumName: Name): ForbiddenWordsInfo {
-        return { names: [], includeGlobalForbidden: true };
+        return {names: [], includeGlobalForbidden: true};
     }
 
     protected forbiddenForUnionMembers(_u: UnionType, _unionName: Name): ForbiddenWordsInfo {
-        return { names: [], includeGlobalForbidden: true };
+        return {names: [], includeGlobalForbidden: true};
     }
 
     protected makeNamedTypeNamer(): Namer {
@@ -552,13 +554,13 @@ export class SwiftRenderer extends ConvenienceRenderer {
             const redundant = this.sourcelikeToString(name) === label;
 
             if (this._options.dense && redundant) {
-                group.push({ name });
+                group.push({name});
             } else {
                 if (group.length > 0) {
                     groups.push(group);
                     group = [];
                 }
-                groups.push([{ name, label }]);
+                groups.push([{name, label}]);
             }
         });
 
@@ -638,7 +640,7 @@ export class SwiftRenderer extends ConvenienceRenderer {
                 let lastProperty: ClassProperty | undefined = undefined;
                 let lastNames: Name[] = [];
 
-                const emitLastProperty = () => {
+                const emitLastProperty = (description: string[] | undefined) => {
                     if (lastProperty === undefined) return;
 
                     const useMutableProperties = this._options.mutableProperties;
@@ -660,6 +662,14 @@ export class SwiftRenderer extends ConvenienceRenderer {
                     });
                     sources.push(": ");
                     sources.push(this.swiftPropertyType(lastProperty));
+                    //生成注释
+                    if (description != undefined) {
+                        if (this._options.singleComments) {
+                            this.emitDescriptionBlock(description)
+                        } else {
+                            sources.push(["    ///", description])
+                        }
+                    }
                     this.emitLine(sources);
 
                     lastProperty = undefined;
@@ -673,18 +683,15 @@ export class SwiftRenderer extends ConvenienceRenderer {
                         lastNames.length >= MAX_SAMELINE_PROPERTIES ||
                         description !== undefined
                     ) {
-                        emitLastProperty();
+                        emitLastProperty(description);
                     }
                     if (lastProperty === undefined) {
                         lastProperty = p;
                     }
                     lastNames.push(name);
-                    if (description !== undefined) {
-                        this.emitDescription(description);
-                        emitLastProperty();
-                    }
+                    emitLastProperty(description);
                 });
-                emitLastProperty();
+                emitLastProperty(undefined);
             } else {
                 this.forEachClassProperty(c, "none", (name, jsonName, p) => {
                     const description = this.descriptionForClassProperty(c, jsonName);
@@ -703,7 +710,7 @@ export class SwiftRenderer extends ConvenienceRenderer {
                     this.ensureBlankLine();
                     this.emitBlock("enum CodingKeys: String, CodingKey", () => {
                         for (const group of groups) {
-                            const { name, label } = group[0];
+                            const {name, label} = group[0];
                             if (this._options.explicitCodingKeys && label !== undefined) {
                                 this.emitLine("case ", name, ' = "', label, '"');
                             } else {
@@ -765,7 +772,7 @@ export class SwiftRenderer extends ConvenienceRenderer {
     protected initializableProperties(c: ClassType): SwiftProperty[] {
         const properties: SwiftProperty[] = [];
         this.forEachClassProperty(c, "none", (name, jsonName, parameter, position) => {
-            const property = { name, jsonName, parameter, position };
+            const property = {name, jsonName, parameter, position};
             properties.push(property);
         });
         return properties;

@@ -225,7 +225,8 @@ function getTargetLanguageOptions(inputData, targetLanguage, options) {
                 inputData: inputData,
                 lang: retTargetLanguage,
                 rendererOptions: {
-                    'just-types': true
+                    'just-types': true,
+                    'single-comments': optionsMap["singleComments"] ?? true
                 }
             }
             break
@@ -235,7 +236,8 @@ function getTargetLanguageOptions(inputData, targetLanguage, options) {
                 inputData: inputData,
                 lang: retTargetLanguage,
                 rendererOptions: {
-                    'just-types': true
+                    'just-types': true,
+                    'single-comments': optionsMap["singleComments"] ?? true
                 }
             }
             break
