@@ -189,7 +189,7 @@ export class GoRenderer extends ConvenienceRenderer {
             _anyType => maybeAnnotated(withIssues, anyTypeIssueAnnotation, "interface{}"),
             _nullType => maybeAnnotated(withIssues, nullTypeIssueAnnotation, "interface{}"),
             _boolType => "bool",
-            _integerType => "int64",
+            _integerType => "int",
             _doubleType => "float64",
             _stringType => "string",
             arrayType => ["[]", this.goType(arrayType.items, withIssues)],
