@@ -1,6 +1,6 @@
-import { TypeKind, Type, ClassType, EnumType, UnionType, ClassProperty } from "../Type";
-import { matchType, nullableFromUnion, removeNullFromUnion } from "../TypeUtils";
-import { Name, DependencyName, Namer, funPrefixNamer } from "../Naming";
+import {TypeKind, Type, ClassType, EnumType, UnionType, ClassProperty} from "../Type";
+import {matchType, nullableFromUnion, removeNullFromUnion} from "../TypeUtils";
+import {Name, DependencyName, Namer, funPrefixNamer} from "../Naming";
 import {
     legalizeCharacters,
     isLetterOrUnderscore,
@@ -12,19 +12,20 @@ import {
     allUpperWordStyle,
     camelCase
 } from "../support/Strings";
-import { assert, defined } from "../support/Support";
-import { StringOption, BooleanOption, Option, OptionValues, getOptionValues } from "../RendererOptions";
-import { Sourcelike, maybeAnnotated, modifySource } from "../Source";
-import { anyTypeIssueAnnotation, nullTypeIssueAnnotation } from "../Annotation";
-import { TargetLanguage } from "../TargetLanguage";
-import { ConvenienceRenderer } from "../ConvenienceRenderer";
-import { RenderContext } from "../Renderer";
+import {assert, defined} from "../support/Support";
+import {StringOption, BooleanOption, Option, OptionValues, getOptionValues} from "../RendererOptions";
+import {Sourcelike, maybeAnnotated, modifySource} from "../Source";
+import {anyTypeIssueAnnotation, nullTypeIssueAnnotation} from "../Annotation";
+import {TargetLanguage} from "../TargetLanguage";
+import {ConvenienceRenderer} from "../ConvenienceRenderer";
+import {RenderContext} from "../Renderer";
 
 export const goOptions = {
     justTypes: new BooleanOption("just-types", "Plain types only", false),
     justTypesAndPackage: new BooleanOption("just-types-and-package", "Plain types with package only", false),
     packageName: new StringOption("package", "Generated package name", "NAME", "main"),
-    multiFileOutput: new BooleanOption("multi-file-output", "Renders each top-level object in its own Go file", false)
+    multiFileOutput: new BooleanOption("multi-file-output", "Renders each top-level object in its own Go file", false),
+    singleComments: new BooleanOption("single-comments", "Comment In A SingleLine", true)
 };
 
 export class GoTargetLanguage extends TargetLanguage {
@@ -33,7 +34,7 @@ export class GoTargetLanguage extends TargetLanguage {
     }
 
     protected getOptions(): Option<any>[] {
-        return [goOptions.justTypes, goOptions.packageName, goOptions.multiFileOutput, goOptions.justTypesAndPackage];
+        return [goOptions.justTypes, goOptions.packageName, goOptions.multiFileOutput, goOptions.justTypesAndPackage,goOptions.singleComments];
     }
 
     get supportsUnionsWithBothNumberTypes(): boolean {
@@ -264,13 +265,22 @@ export class GoRenderer extends ConvenienceRenderer {
                 description !== undefined && description.length > 0 ? description.map(d => "// " + d) : [];
             const goType = this.propertyGoType(p);
             const omitEmpty = canOmitEmpty(p) ? ",omitempty" : [];
-
-            docStrings.forEach(doc => columns.push([doc]));
-            columns.push([
-                [name, " "],
-                [goType, " "],
-                ['`json:"', stringEscape(jsonName), omitEmpty, '"`']
-            ]);
+            //注释是否单独一行展示
+            if (this._options.singleComments) {
+                docStrings.forEach(doc => columns.push([doc]));
+                columns.push([
+                    [name, " "],
+                    [goType, " "],
+                    ['`json:"', stringEscape(jsonName), omitEmpty, '"`'],
+                ]);
+            } else {
+                columns.push([
+                    [name, " "],
+                    [goType, " "],
+                    ['`json:"', stringEscape(jsonName), omitEmpty, '"`'],
+                    [" ", docStrings]
+                ]);
+            }
         });
         this.emitDescription(this.descriptionForType(c));
         this.emitStruct(className, columns);
